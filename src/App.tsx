@@ -296,12 +296,12 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
                   "flex items-center gap-4 px-5 py-4 rounded-[1.25rem] transition-all duration-300 group relative overflow-hidden",
                   location.pathname === item.path 
                     ? "bg-blue-600 text-white shadow-xl shadow-blue-600/40 glow-blue" 
-                    : "text-slate-500 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5"
+                    : "text-indigo-400/60 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5"
                 )}
               >
                 <item.icon size={22} className={cn(
                   "transition-all duration-300 group-hover:scale-110",
-                  location.pathname === item.path ? "text-white" : "text-slate-600 group-hover:text-blue-400"
+                  location.pathname === item.path ? "text-white" : "text-indigo-400/40 group-hover:text-blue-400"
                 )} />
                 <span className="font-black text-xs uppercase tracking-[0.15em]">{item.label}</span>
                 {location.pathname === item.path && (
@@ -318,7 +318,7 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
           <div className="pt-8 border-t border-white/5">
             <button 
               onClick={handleLogout}
-              className="flex items-center gap-4 w-full px-5 py-4 text-slate-500 hover:text-red-400 transition-all duration-300 rounded-[1.25rem] hover:bg-red-400/10 group border border-transparent hover:border-red-400/10"
+              className="flex items-center gap-4 w-full px-5 py-4 text-indigo-400/60 hover:text-red-400 transition-all duration-300 rounded-[1.25rem] hover:bg-red-400/10 group border border-transparent hover:border-red-400/10"
             >
               <LogOut size={22} className="group-hover:-translate-x-1 transition-transform" />
               <span className="font-black text-xs uppercase tracking-[0.15em]">Keluar</span>
@@ -662,13 +662,13 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                       )}
                       <div>
                         <span className="font-black text-white block tracking-tight">{person.fullName}</span>
-                        <span className="text-xs text-slate-500 font-medium">{person.phone || '-'}</span>
+                        <span className="text-xs text-indigo-400/60 font-medium">{person.phone || '-'}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-5 text-slate-400 font-mono text-sm tracking-widest">{person.registrationNumber}</td>
-                  <td className="px-8 py-5 text-slate-400 font-bold uppercase text-xs tracking-widest">{person.country}</td>
-                  <td className="px-8 py-5 text-slate-400 font-medium">
+                  <td className="px-8 py-5 text-indigo-400/40 font-mono text-sm tracking-widest">{person.registrationNumber}</td>
+                  <td className="px-8 py-5 text-indigo-400/60 font-bold uppercase text-xs tracking-widest">{person.country}</td>
+                  <td className="px-8 py-5 text-indigo-400/60 font-medium">
                     {sponsors.find(s => s.id === person.sponsorId)?.name || 'Tidak Diketahui'}
                   </td>
                   <td className="px-8 py-5">
@@ -732,7 +732,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                       )}
                       <div>
                         <h4 className="font-black text-white text-lg tracking-tight leading-tight mb-1">{person.fullName}</h4>
-                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{person.registrationNumber}</p>
+                        <p className="text-xs text-indigo-400/60 font-bold uppercase tracking-widest">{person.registrationNumber}</p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
@@ -752,17 +752,17 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
               
               <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">
                 <div>
-                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Negara</p>
+                  <p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Negara</p>
                   <p className="text-sm font-bold text-slate-300">{person.country}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Sponsor</p>
+                  <p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Sponsor</p>
                   <p className="text-sm font-bold text-slate-300 truncate">
                     {sponsors.find(s => s.id === person.sponsorId)?.name || '-'}
                   </p>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">No. HP</p>
+                  <p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">No. HP</p>
                   <p className="text-sm font-bold text-slate-300">{person.phone || '-'}</p>
                 </div>
               </div>
@@ -777,7 +777,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                 </button>
                 <button 
                   onClick={() => { setEditingCPMI(person); setPhotoPreview(person.photo || null); setIsModalOpen(true); }}
-                  className="flex-1 bg-white/5 text-slate-400 py-3 rounded-xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all active:scale-95 border border-white/5"
+                  className="flex-1 bg-white/5 text-indigo-400/60 py-3 rounded-xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all active:scale-95 border border-white/5"
                 >
                   <Edit2 size={16} />
                   Edit
@@ -1103,18 +1103,18 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => window.print()}
-                    className="p-3 text-slate-400 hover:text-blue-400 hover:bg-white/5 rounded-xl transition-all active:scale-90"
+                    className="p-3 text-indigo-400/60 hover:text-blue-400 hover:bg-white/5 rounded-xl transition-all active:scale-90"
                     title="Cetak Biodata"
                   >
                     <Printer size={20} />
                   </button>
-                  <button onClick={() => setIsDetailOpen(false)} className="text-slate-400 hover:text-white p-3 hover:bg-white/5 rounded-full transition-all active:scale-90">
+                  <button onClick={() => setIsDetailOpen(false)} className="text-indigo-400/60 hover:text-white p-3 hover:bg-white/5 rounded-full transition-all active:scale-90">
                     <X size={24} />
                   </button>
                 </div>
               </div>
               
-              <div id="printable-biodata" className="flex-1 overflow-y-auto p-8 sm:p-12 space-y-12 custom-scrollbar">
+              <div id="printable-biodata" className="flex-1 overflow-y-auto p-4 sm:p-12 space-y-8 sm:space-y-12 custom-scrollbar">
                 <style dangerouslySetInnerHTML={{ __html: `
                   @media print {
                     body * { visibility: hidden; }
@@ -1125,15 +1125,15 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                   }
                 `}} />
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">
                   <div className="space-y-6">
-                    <div className="relative group aspect-[3/4] rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                    <div className="relative group aspect-[3/4] rounded-3xl overflow-hidden border border-white/10 shadow-2xl max-w-[280px] mx-auto md:max-w-none">
                       <img src={selectedCPMI.photo || `https://ui-avatars.com/api/?name=${selectedCPMI.fullName}&size=400`} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     </div>
-                    <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-4">
+                    <div className="p-5 sm:p-6 bg-white/5 rounded-3xl border border-white/5 space-y-4">
                       <div>
-                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Status Berkas</p>
+                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 px-1">Status Berkas</p>
                         <span className={cn(
                           "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-block",
                           selectedCPMI.documentStatus === 'Lengkap' ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : 
@@ -1144,7 +1144,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                         </span>
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Proses Saat Ini</p>
+                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 px-1">Proses Saat Ini</p>
                         <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/20 inline-block">
                           {selectedCPMI.processStatus || 'Proses'}
                         </span>
@@ -1152,32 +1152,32 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                     </div>
                   </div>
 
-                  <div className="md:col-span-2 space-y-10">
-                    <section className="space-y-6">
+                  <div className="md:col-span-2 space-y-8 sm:space-y-10">
+                    <section className="space-y-4 sm:space-y-6">
                       <h4 className="font-black text-blue-500 uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
                         <div className="w-1.5 h-4 bg-blue-500 rounded-full" />
                         Informasi Personal
                       </h4>
-                      <div className="grid grid-cols-2 gap-8 bg-white/5 p-8 rounded-3xl border border-white/5">
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Agama</p><p className="font-bold text-slate-200">{selectedCPMI.religion || '-'}</p></div>
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Umur</p><p className="font-bold text-slate-200">{selectedCPMI.age || '-'} Tahun</p></div>
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">No. HP</p><p className="font-bold text-slate-200">{selectedCPMI.phone || '-'}</p></div>
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Tempat, Tgl Lahir</p><p className="font-bold text-slate-200">{selectedCPMI.pob}, {selectedCPMI.dob ? format(new Date(selectedCPMI.dob), 'dd MMM yyyy') : '-'}</p></div>
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Tinggi / Berat</p><p className="font-bold text-slate-200">{selectedCPMI.height}cm / {selectedCPMI.weight}kg</p></div>
-                        <div className="col-span-2"><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Alamat</p><p className="font-bold text-slate-200 leading-relaxed">{selectedCPMI.address || '-'}</p></div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 bg-white/5 p-5 sm:p-8 rounded-3xl border border-white/5">
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Agama</p><p className="font-bold text-slate-200">{selectedCPMI.religion || '-'}</p></div>
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Umur</p><p className="font-bold text-slate-200">{selectedCPMI.age || '-'} Tahun</p></div>
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">No. HP</p><p className="font-bold text-slate-200">{selectedCPMI.phone || '-'}</p></div>
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Tempat, Tgl Lahir</p><p className="font-bold text-slate-200">{selectedCPMI.pob}, {selectedCPMI.dob ? format(new Date(selectedCPMI.dob), 'dd MMM yyyy') : '-'}</p></div>
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Tinggi / Berat</p><p className="font-bold text-slate-200">{selectedCPMI.height}cm / {selectedCPMI.weight}kg</p></div>
+                        <div className="sm:col-span-2"><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Alamat</p><p className="font-bold text-slate-200 leading-relaxed">{selectedCPMI.address || '-'}</p></div>
                       </div>
                     </section>
 
-                    <section className="space-y-6">
+                    <section className="space-y-4 sm:space-y-6">
                       <h4 className="font-black text-blue-500 uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
                         <div className="w-1.5 h-4 bg-blue-500 rounded-full" />
                         Data Keluarga & Status
                       </h4>
-                      <div className="grid grid-cols-2 gap-8 bg-white/5 p-8 rounded-3xl border border-white/5">
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Bapak / Ibu</p><p className="font-bold text-slate-200">{selectedCPMI.fatherName} / {selectedCPMI.motherName}</p></div>
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Suami/Istri</p><p className="font-bold text-slate-200">{selectedCPMI.spouseName || '-'}</p></div>
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Status / Anak</p><p className="font-bold text-slate-200">{selectedCPMI.maritalStatus} / {selectedCPMI.childrenCount} Anak</p></div>
-                        <div><p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Pendidikan</p><p className="font-bold text-slate-200">{selectedCPMI.education || '-'}</p></div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 bg-white/5 p-5 sm:p-8 rounded-3xl border border-white/5">
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Bapak / Ibu</p><p className="font-bold text-slate-200">{selectedCPMI.fatherName} / {selectedCPMI.motherName}</p></div>
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Suami/Istri</p><p className="font-bold text-slate-200">{selectedCPMI.spouseName || '-'}</p></div>
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Status / Anak</p><p className="font-bold text-slate-200">{selectedCPMI.maritalStatus} / {selectedCPMI.childrenCount} Anak</p></div>
+                        <div><p className="text-[10px] font-black text-indigo-400/60 uppercase tracking-widest mb-1">Pendidikan</p><p className="font-bold text-slate-200">{selectedCPMI.education || '-'}</p></div>
                       </div>
                     </section>
                   </div>
@@ -1232,8 +1232,8 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                       { id: 'eatPork', label: 'Makan Babi' },
                       { id: 'handlePork', label: 'Pegang/Potong Babi' },
                     ].map(term => (
-                      <div key={term.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                        <span className="text-sm text-slate-600">{term.label}</span>
+                      <div key={term.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl">
+                        <span className="text-xs font-black uppercase tracking-widest text-slate-400">{term.label}</span>
                         {(selectedCPMI.terms as any)?.[term.id] ? <CheckCircle2 className="text-emerald-500" size={18} /> : <X className="text-red-400" size={18} />}
                       </div>
                     ))}
@@ -1241,9 +1241,9 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                 </section>
               </div>
               
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-                <button onClick={() => window.print()} className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors">
-                  <Download size={18} />
+              <div className="p-6 bg-white/5 border-t border-white/5 flex justify-end">
+                <button onClick={() => window.print()} className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/30 active:scale-95 glow-blue">
+                  <Download size={20} />
                   <span>Cetak Biodata</span>
                 </button>
               </div>
@@ -1646,18 +1646,18 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
                 <h3 className="text-2xl font-black text-white uppercase tracking-tight">
                   {editingTransaction ? 'Edit Transaksi' : 'Tambah Transaksi'}
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white transition-colors">
+                <button onClick={() => setIsModalOpen(false)} className="text-indigo-400/60 hover:text-white transition-colors">
                   <X size={24} />
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="p-8 space-y-6">
+              <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-4 sm:space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
                 <div className="flex p-1.5 bg-white/5 rounded-2xl border border-white/5">
                   <button 
                     type="button"
                     onClick={() => setType('income')}
                     className={cn(
-                      "flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300",
-                      type === 'income' ? "bg-emerald-600 text-white shadow-lg glow-emerald" : "text-slate-500 hover:text-slate-300"
+                      "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300",
+                      type === 'income' ? "bg-emerald-600 text-white shadow-lg glow-emerald" : "text-indigo-400/40 hover:text-indigo-300"
                     )}
                   >
                     Pemasukan
@@ -1666,8 +1666,8 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
                     type="button"
                     onClick={() => setType('expense')}
                     className={cn(
-                      "flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300",
-                      type === 'expense' ? "bg-red-600 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                      "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300",
+                      type === 'expense' ? "bg-red-600 text-white shadow-lg" : "text-indigo-400/40 hover:text-indigo-300"
                     )}
                   >
                     Pengeluaran
@@ -1675,78 +1675,78 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Jumlah (IDR)</label>
+                  <label className="block text-[10px] font-black text-indigo-400/60 uppercase tracking-widest ml-1">Jumlah (IDR)</label>
                   <input 
                     name="amount" 
                     type="number" 
                     defaultValue={editingTransaction?.amount}
                     required 
-                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all placeholder:text-slate-600"
+                    className="w-full px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all placeholder:text-slate-600 text-sm sm:text-base"
                     placeholder="0"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Tanggal</label>
+                  <label className="block text-[10px] font-black text-indigo-400/60 uppercase tracking-widest ml-1">Tanggal</label>
                   <input 
                     name="date" 
                     type="date" 
                     defaultValue={editingTransaction ? format(editingTransaction.date.toDate(), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')}
                     required 
-                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                    className="w-full px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm sm:text-base"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Kategori</label>
+                  <label className="block text-[10px] font-black text-indigo-400/60 uppercase tracking-widest ml-1">Kategori</label>
                   <select 
                     name="category" 
                     defaultValue={editingTransaction?.category}
-                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all appearance-none"
+                    className="w-full px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all appearance-none text-sm sm:text-base"
                   >
-                    <option value="Biaya MD" className="bg-slate-900">Biaya MD</option>
-                    <option value="Fee Sponsor" className="bg-slate-900">Fee Sponsor</option>
-                    <option value="ID Paspor" className="bg-slate-900">ID Paspor</option>
-                    <option value="Living Cost" className="bg-slate-900">Living Cost</option>
-                    <option value="Mcu Pra" className="bg-slate-900">Mcu Pra</option>
-                    <option value="Royalti" className="bg-slate-900">Royalti</option>
-                    <option value="Transport" className="bg-slate-900">Transport</option>
-                    <option value="Keterangan Lain" className="bg-slate-900">Keterangan Lain</option>
-                    <option value="Lainnya" className="bg-slate-900">Lainnya</option>
+                    <option value="Biaya MD" className="bg-[#0f172a]">Biaya MD</option>
+                    <option value="Fee Sponsor" className="bg-[#0f172a]">Fee Sponsor</option>
+                    <option value="ID Paspor" className="bg-[#0f172a]">ID Paspor</option>
+                    <option value="Living Cost" className="bg-[#0f172a]">Living Cost</option>
+                    <option value="Mcu Pra" className="bg-[#0f172a]">Mcu Pra</option>
+                    <option value="Royalti" className="bg-[#0f172a]">Royalti</option>
+                    <option value="Transport" className="bg-[#0f172a]">Transport</option>
+                    <option value="Keterangan Lain" className="bg-[#0f172a]">Keterangan Lain</option>
+                    <option value="Lainnya" className="bg-[#0f172a]">Lainnya</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Keterangan</label>
+                  <label className="block text-[10px] font-black text-indigo-400/60 uppercase tracking-widest ml-1">Keterangan</label>
                   <input 
                     name="description" 
                     defaultValue={editingTransaction?.description}
                     required 
-                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all placeholder:text-slate-600"
+                    className="w-full px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all placeholder:text-slate-600 text-sm sm:text-base"
                     placeholder="Contoh: Pembayaran Paspor"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">CPMI Terkait (Opsional)</label>
+                  <label className="block text-[10px] font-black text-indigo-400/60 uppercase tracking-widest ml-1">CPMI Terkait (Opsional)</label>
                   <select 
                     name="cpmiId" 
                     defaultValue={editingTransaction?.cpmiId || ''}
-                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all appearance-none"
+                    className="w-full px-5 py-3.5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold focus:ring-2 focus:ring-emerald-500 outline-none transition-all appearance-none text-sm sm:text-base"
                   >
-                    <option value="" className="bg-slate-900">Tidak Ada</option>
+                    <option value="" className="bg-[#0f172a]">Tidak Ada</option>
                     {cpmi.map(p => (
-                      <option key={p.id} value={p.id} className="bg-slate-900">{p.fullName}</option>
+                      <option key={p.id} value={p.id} className="bg-[#0f172a]">{p.fullName}</option>
                     ))}
                   </select>
                 </div>
-                <div className="pt-6 flex gap-4">
+                <div className="pt-4 flex gap-3 sm:gap-4">
                   <button 
                     type="button" 
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-4 border border-white/10 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-white/5 transition-all active:scale-95"
+                    className="flex-1 px-4 py-3.5 border border-white/10 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-white/5 transition-all active:scale-95 text-[10px] sm:text-xs"
                   >
                     Batal
                   </button>
                   <button 
                     type="submit"
-                    className="flex-1 px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-xl shadow-emerald-600/30 active:scale-95 glow-emerald"
+                    className="flex-1 px-4 py-3.5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-xl shadow-emerald-600/30 active:scale-95 glow-emerald text-[10px] sm:text-xs"
                   >
                     {editingTransaction ? 'Simpan' : 'Tambah'}
                   </button>
@@ -1817,15 +1817,15 @@ const ReportsPage = ({ transactions }: { transactions: Transaction[] }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="glass p-6 rounded-3xl digital-border">
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2">Total Pemasukan</p>
+          <p className="text-indigo-400/60 text-[10px] font-black uppercase tracking-widest mb-2">Total Pemasukan</p>
           <p className="text-2xl font-black text-emerald-500 tracking-tight">{formatCurrency(reportData.income)}</p>
         </div>
         <div className="glass p-6 rounded-3xl digital-border">
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2">Total Pengeluaran</p>
+          <p className="text-indigo-400/60 text-[10px] font-black uppercase tracking-widest mb-2">Total Pengeluaran</p>
           <p className="text-2xl font-black text-red-500 tracking-tight">{formatCurrency(reportData.expense)}</p>
         </div>
         <div className="glass p-6 rounded-3xl digital-border">
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2">Saldo Saat Ini</p>
+          <p className="text-indigo-400/60 text-[10px] font-black uppercase tracking-widest mb-2">Saldo Saat Ini</p>
           <p className="text-2xl font-black text-blue-500 tracking-tight">{formatCurrency(reportData.balance)}</p>
         </div>
         <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-3xl shadow-xl shadow-blue-600/30 glow-blue">
@@ -1955,8 +1955,9 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-[#0f172a] relative overflow-hidden">
       {/* Background Decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-purple-600/10 rounded-full blur-[150px]" />
+        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-blue-600/20 rounded-full blur-[150px]" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-purple-600/20 rounded-full blur-[150px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[60%] h-[60%] bg-emerald-600/10 rounded-full blur-[120px]" />
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.05]" />
       </div>
 
@@ -1970,7 +1971,7 @@ const LoginPage = () => {
         </div>
         
         <h1 className="text-4xl font-black text-white mb-4 tracking-tighter uppercase">P3MI <span className="text-blue-500">Digital</span></h1>
-        <p className="text-slate-400 mb-12 font-medium leading-relaxed">Sistem Manajemen Terintegrasi untuk Penyaluran Pekerja Migran Indonesia.</p>
+        <p className="text-indigo-400/80 mb-12 font-medium leading-relaxed">Sistem Manajemen Terintegrasi untuk Penyaluran Pekerja Migran Indonesia.</p>
         
         <button
           onClick={handleLogin}
@@ -1990,12 +1991,12 @@ const LoginPage = () => {
         <div className="mt-12 flex items-center justify-center gap-8">
           <div className="text-center">
             <p className="text-white font-black text-xl">100%</p>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Secure</p>
+            <p className="text-indigo-400/60 text-[10px] font-black uppercase tracking-widest">Secure</p>
           </div>
           <div className="w-[1px] h-8 bg-white/10" />
           <div className="text-center">
             <p className="text-white font-black text-xl">Real-time</p>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Sync</p>
+            <p className="text-indigo-400/60 text-[10px] font-black uppercase tracking-widest">Sync</p>
           </div>
         </div>
       </motion.div>
@@ -2060,11 +2061,11 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"
+          className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full shadow-lg shadow-blue-500/20"
         />
       </div>
     );
@@ -2117,14 +2118,14 @@ export default function App() {
                     <option value="PT Trias Insan Madani Cirebon">PT Trias Insan Madani Cirebon</option>
                     <option value="PT HARCOSELARAS SENTOSAJAYA">PT HARCOSELARAS SENTOSAJAYA</option>
                   </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-white transition-colors">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400/60 group-hover:text-white transition-colors">
                     <ChevronDown size={14} />
                   </div>
                 </div>
                 
                 <div className="text-right hidden sm:block border-l border-white/5 pl-6">
                   <p className="text-sm font-black text-white leading-none mb-1 tracking-tight">{user.displayName}</p>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">{user.email}</p>
+                  <p className="text-[10px] text-indigo-400/60 font-bold uppercase tracking-[0.2em]">{user.email}</p>
                 </div>
                 <div className="relative">
                   <img 
@@ -2139,7 +2140,7 @@ export default function App() {
 
             <div className="p-4 sm:p-8 lg:p-12 max-w-7xl mx-auto w-full flex-1">
               <div className="md:hidden mb-10">
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-3 px-2">Pilih Perusahaan</label>
+                <label className="block text-[10px] font-black text-indigo-400/60 uppercase tracking-[0.3em] mb-3 px-2">Pilih Perusahaan</label>
                 <div className="relative group">
                   <select 
                     value={currentCompany}
@@ -2149,7 +2150,7 @@ export default function App() {
                     <option value="PT Trias Insan Madani Cirebon">PT Trias Insan Madani Cirebon</option>
                     <option value="PT HARCOSELARAS SENTOSAJAYA">PT HARCOSELARAS SENTOSAJAYA</option>
                   </select>
-                  <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-focus-within:text-blue-500 transition-colors">
+                  <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-400/60 group-focus-within:text-blue-500 transition-colors">
                     <ChevronDown size={20} />
                   </div>
                 </div>
