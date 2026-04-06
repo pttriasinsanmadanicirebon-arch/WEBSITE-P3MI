@@ -25,6 +25,7 @@ import {
   GoogleAuthProvider, 
   onAuthStateChanged, 
   signOut,
+  updateProfile,
   User
 } from 'firebase/auth';
 import { 
@@ -1118,11 +1119,34 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
               <div id="printable-biodata" className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-10 custom-scrollbar bg-white">
                 <style dangerouslySetInnerHTML={{ __html: `
                   @media print {
-                    body * { visibility: hidden; }
-                    #printable-biodata, #printable-biodata * { visibility: visible; color: black !important; background: white !important; }
-                    #printable-biodata { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+                    @page { size: A4; margin: 1cm; }
+                    body { visibility: hidden; background: white !important; }
+                    #printable-biodata { 
+                      visibility: visible !important; 
+                      position: absolute !important; 
+                      left: 0 !important; 
+                      top: 0 !important; 
+                      width: 100% !important; 
+                      padding: 0 !important;
+                      margin: 0 !important;
+                      display: block !important;
+                      height: auto !important;
+                      overflow: visible !important;
+                    }
+                    #printable-biodata * { visibility: visible !important; color: black !important; }
                     .no-print { display: none !important; }
-                    .bg-slate-50, .bg-white, .border-slate-100 { border: 1px solid #eee !important; background: white !important; box-shadow: none !important; }
+                    .bg-slate-50, .bg-slate-50\/50, .bg-white { background: white !important; border: 1px solid #e2e8f0 !important; }
+                    .text-indigo-600 { color: #4f46e5 !important; }
+                    .rounded-2xl, .rounded-3xl, .rounded-xl { border-radius: 8px !important; }
+                    .shadow-sm, .shadow-md, .shadow-lg, .shadow-2xl { shadow: none !important; box-shadow: none !important; }
+                    img { max-width: 180px !important; height: auto !important; border-radius: 4px !important; }
+                    .grid { display: grid !important; gap: 1rem !important; }
+                    .md\:grid-cols-3 { grid-template-columns: 1fr 2fr !important; }
+                    .md\:col-span-2 { grid-column: span 2 !important; }
+                    .sm\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+                    section { break-inside: avoid !important; margin-bottom: 1.5rem !important; }
+                    .p-6, .p-10 { padding: 0.5rem !important; }
+                    .gap-8, .gap-10 { gap: 1rem !important; }
                   }
                 `}} />
                 
@@ -1950,6 +1974,140 @@ const ConfirmModal = ({
   );
 };
 
+const ProfileModal = ({ 
+  isOpen, 
+  onClose, 
+  user 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  user: User;
+}) => {
+  const [displayName, setDisplayName] = useState(user.displayName || '');
+  const [photoURL, setPhotoURL] = useState(user.photoURL || '');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Ukuran file maksimal 5MB');
+      return;
+    }
+
+    setError(null);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoURL(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      await updateProfile(user, {
+        displayName,
+        photoURL
+      });
+      onClose();
+      window.location.reload(); // Refresh to show changes
+    } catch (err) {
+      setError('Gagal memperbarui profil. Silakan coba lagi.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative bg-white border border-slate-100 w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden"
+          >
+            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Edit Profil</h3>
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-full transition-all">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className="p-8 space-y-6">
+              <div className="flex flex-col items-center gap-4 mb-4">
+                <div className="relative group">
+                  <img 
+                    src={photoURL || `https://ui-avatars.com/api/?name=${displayName}`} 
+                    className="w-24 h-24 rounded-3xl object-cover border-4 border-white shadow-xl" 
+                    alt="Profile" 
+                  />
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <Plus className="text-white" size={24} />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                  </label>
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Klik foto untuk ganti (Maks 5MB)</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Nama Lengkap</label>
+                <input 
+                  type="text" 
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  required
+                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 transition-all"
+                  placeholder="Masukkan nama lengkap"
+                />
+              </div>
+
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-medium">
+                  <AlertCircle size={18} />
+                  {error}
+                </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button" 
+                  onClick={onClose}
+                  className="flex-1 px-6 py-3.5 border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all text-sm"
+                >
+                  Batal
+                </button>
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                >
+                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Simpan'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
@@ -2022,6 +2180,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [currentCompany, setCurrentCompany] = useState<string>('PT Trias Insan Madani Cirebon');
 
   const [cpmi, setCpmi] = useState<CPMI[]>([]);
@@ -2132,16 +2291,25 @@ export default function App() {
               <p className="text-sm font-bold text-slate-900 leading-none mb-1">{user.displayName}</p>
               <p className="text-[11px] text-slate-500 font-medium">{user.email}</p>
             </div>
-            <div className="relative">
+            <button 
+              onClick={() => setIsProfileOpen(true)}
+              className="relative group transition-transform active:scale-95"
+            >
               <img 
                 src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
-                className="w-10 h-10 rounded-xl border border-slate-200 shadow-sm object-cover" 
+                className="w-10 h-10 rounded-xl border border-slate-200 shadow-sm object-cover group-hover:ring-2 group-hover:ring-indigo-500 transition-all" 
                 alt="Avatar" 
               />
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
-            </div>
+            </button>
           </div>
         </header>
+
+        <ProfileModal 
+          isOpen={isProfileOpen} 
+          onClose={() => setIsProfileOpen(false)} 
+          user={user} 
+        />
 
         <div className="p-6 sm:p-10 max-w-7xl mx-auto w-full flex-1">
           <div className="md:hidden mb-8">
