@@ -1,0 +1,151 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: cpmi
+    // Fields:
+    //   - company: string (required, enum)
+    //   - fullName: string (required)
+    //   - registrationNumber: string (required)
+    //   - registrationDate: string (required)
+    //   - country: string (required)
+    //   - sponsorId: string (required)
+    //   - photo: string (optional, base64)
+    //   - address: string (optional)
+    //   - religion: string (optional)
+    //   - age: number (optional)
+    //   - pob: string (optional)
+    //   - dob: string (optional)
+    //   - height: number (optional)
+    //   - weight: number (optional)
+    //   - fatherName: string (optional)
+    //   - motherName: string (optional)
+    //   - spouseName: string (optional)
+    //   - occupation: string (optional)
+    //   - siblingsCount: number (optional)
+    //   - birthOrder: number (optional)
+    //   - education: string (optional)
+    //   - maritalStatus: string (optional)
+    //   - childrenCount: number (optional)
+    //   - languages: map (optional)
+    //   - documents: map (optional)
+    //   - workExperience: string (optional)
+    //   - terms: map (optional)
+    //   - documentStatus: string (optional)
+    //   - notes: string (optional)
+    //   - createdAt: timestamp (required)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: sponsors
+    // Fields:
+    //   - name: string (required)
+    //   - contactPerson: string (optional)
+    //   - phone: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: transactions
+    // Fields:
+    //   - type: string (required, 'income' | 'expense')
+    //   - amount: number (required, positive)
+    //   - category: string (optional)
+    //   - description: string (optional)
+    //   - cpmiId: string (optional)
+    //   - date: timestamp (required)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.email == "pttriasinsanmadanicirebon@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidString(field, min, max) {
+      return request.resource.data[field] is string &&
+             request.resource.data[field].size() >= min &&
+             request.resource.data[field].size() <= max;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidCPMI(data) {
+      return hasRequiredFields(['company', 'fullName', 'registrationNumber', 'registrationDate', 'country', 'sponsorId', 'createdAt', 'updatedAt']) &&
+             data.company in ['PT Trias Insan Madani Cirebon', 'PT HARCOSELARAS SENTOSAJAYA'] &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             data.registrationNumber is string && data.registrationNumber.size() > 0 && data.registrationNumber.size() < 50 &&
+             data.registrationDate is string &&
+             data.country is string && data.country.size() > 0 &&
+             data.sponsorId is string && data.sponsorId.size() > 0 &&
+             (!('photo' in data) || (data.photo is string && data.photo.size() < 1000000)) &&
+             (!('address' in data) || (data.address is string && data.address.size() < 500)) &&
+             (!('age' in data) || (data.age is number && data.age >= 0 && data.age < 150)) &&
+             (!('height' in data) || (data.height is number && data.height >= 0 && data.height < 300)) &&
+             (!('weight' in data) || (data.weight is number && data.weight >= 0 && data.weight < 500)) &&
+             (!('languages' in data) || data.languages is map) &&
+             (!('documents' in data) || data.documents is map) &&
+             (!('terms' in data) || data.terms is map) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() < 2000));
+    }
+
+    function isValidSponsor(data) {
+      return hasRequiredFields(['name', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100;
+    }
+
+    function isValidTransaction(data) {
+      return hasRequiredFields(['type', 'amount', 'date', 'createdAt']) &&
+             data.type in ['income', 'expense'] &&
+             data.amount is number && data.amount >= 0 &&
+             data.date is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /cpmi/{cpmiId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidCPMI(request.resource.data);
+      allow update: if isAuthenticated() && isValidCPMI(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /sponsors/{sponsorId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSponsor(request.resource.data);
+      allow update: if isAuthenticated() && isValidSponsor(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow update: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}

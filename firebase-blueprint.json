@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "cpmi": {
+      "title": "CPMI",
+      "description": "Calon Pekerja Migran Indonesia with detailed biodata",
+      "type": "object",
+      "properties": {
+        "company": { "type": "string", "enum": ["PT Trias Insan Madani Cirebon", "PT HARCOSELARAS SENTOSAJAYA"], "description": "Perusahaan Penyalur" },
+        "fullName": { "type": "string", "description": "Nama Lengkap" },
+        "registrationNumber": { "type": "string", "description": "Nomor Registrasi" },
+        "registrationDate": { "type": "string", "format": "date", "description": "Tanggal Daftar" },
+        "country": { "type": "string", "description": "Negara Tujuan" },
+        "sponsorId": { "type": "string", "description": "ID Sponsor" },
+        "photo": { "type": "string", "description": "Foto CPMI (Base64/URL)" },
+        "address": { "type": "string", "description": "Alamat" },
+        "religion": { "type": "string", "description": "Agama" },
+        "age": { "type": "number", "description": "Umur" },
+        "pob": { "type": "string", "description": "Tempat Lahir" },
+        "dob": { "type": "string", "format": "date", "description": "Tanggal Lahir" },
+        "height": { "type": "number", "description": "Tinggi Badan" },
+        "weight": { "type": "number", "description": "Berat Badan" },
+        "fatherName": { "type": "string", "description": "Nama Bapak" },
+        "motherName": { "type": "string", "description": "Nama Ibu" },
+        "spouseName": { "type": "string", "description": "Nama Suami/Istri" },
+        "occupation": { "type": "string", "description": "Pekerjaan" },
+        "siblingsCount": { "type": "number", "description": "Jumlah Saudara" },
+        "birthOrder": { "type": "number", "description": "Anak ke Berapa" },
+        "education": { "type": "string", "description": "Pendidikan Terakhir" },
+        "maritalStatus": { "type": "string", "enum": ["Single", "Menikah", "Cerai Hidup", "Cerai Mati"], "description": "Status Pernikahan" },
+        "childrenCount": { "type": "number", "description": "Jumlah Anak" },
+        "languages": { "type": "object", "description": "Kemampuan Bahasa" },
+        "documents": { "type": "object", "description": "Kelengkapan Dokumen" },
+        "workExperience": { "type": "string", "description": "Pengalaman Kerja" },
+        "terms": { "type": "object", "description": "Terms and Conditions" },
+        "documentStatus": { "type": "string", "description": "Status Pemberkasan" },
+        "notes": { "type": "string", "description": "Keterangan/Note Berkas" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["company", "fullName", "registrationNumber", "registrationDate", "country", "sponsorId"]
+    },
+    "sponsor": {
+      "title": "Sponsor",
+      "description": "Data Sponsor/Agen",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nama Sponsor" },
+        "contactPerson": { "type": "string", "description": "Kontak Person" },
+        "phone": { "type": "string", "description": "Nomor Telepon" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "transaction": {
+      "title": "Transaction",
+      "description": "Transaksi Keuangan",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["income", "expense"], "description": "Tipe Transaksi" },
+        "amount": { "type": "number", "description": "Jumlah" },
+        "category": { "type": "string", "description": "Kategori" },
+        "description": { "type": "string", "description": "Deskripsi" },
+        "cpmiId": { "type": "string", "description": "ID CPMI (Opsional)" },
+        "date": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "amount", "date"]
+    }
+  },
+  "firestore": {
+    "/cpmi/{cpmiId}": {
+      "schema": "cpmi",
+      "description": "Koleksi data CPMI"
+    },
+    "/sponsors/{sponsorId}": {
+      "schema": "sponsor",
+      "description": "Koleksi data Sponsor"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "transaction",
+      "description": "Koleksi data Transaksi Keuangan"
+    }
+  }
+}

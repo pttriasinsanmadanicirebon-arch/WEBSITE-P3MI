@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+  .glass-dark {
+    @apply bg-slate-900/70 backdrop-blur-md border border-white/10 shadow-2xl;
+  }
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.2);
+  }
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.2);
+  }
+  .glow-emerald {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+  }
+  .digital-border {
+    @apply border border-slate-200/50 relative overflow-hidden;
+  }
+}
+
+.markdown-body {
+  @apply text-slate-700 leading-relaxed;
+}
