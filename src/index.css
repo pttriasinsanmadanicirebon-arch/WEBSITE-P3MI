@@ -7,28 +7,67 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+    @apply bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-sm;
   }
   .glass-dark {
-    @apply bg-[#0f172a]/90 backdrop-blur-2xl border border-white/10 shadow-2xl;
+    @apply bg-slate-900/95 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
   .glow-blue {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
   }
   .glow-purple {
-    box-shadow: 0 0 40px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
   }
   .glow-emerald {
-    box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
   }
   .glow-red {
-    box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
   }
   .digital-border {
-    @apply border border-white/10 relative overflow-hidden;
+    @apply border border-slate-200/60 relative overflow-hidden;
+  }
+  
+  /* New SaaS-style utilities */
+  .card-saas {
+    @apply bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+  .btn-primary {
+    @apply bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm active:scale-95;
+  }
+  .btn-secondary {
+    @apply bg-white text-slate-700 border border-slate-200 px-4 py-2 rounded-lg font-semibold hover:bg-slate-50 transition-colors shadow-sm active:scale-95;
   }
 }
 
 .markdown-body {
-  @apply text-slate-300 leading-relaxed;
+  @apply text-slate-600 leading-relaxed;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .print-container {
+    width: 210mm; /* A4 width */
+    margin: 0 auto;
+    padding: 20mm;
+    background: white !important;
+  }
 }
