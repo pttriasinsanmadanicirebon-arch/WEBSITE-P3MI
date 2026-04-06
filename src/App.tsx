@@ -14,6 +14,7 @@ import {
   onSnapshot, 
   addDoc, 
   updateDoc, 
+  setDoc,
   doc, 
   deleteDoc, 
   orderBy, 
@@ -1092,7 +1093,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDetailOpen(false)} className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden my-4 sm:my-8 flex flex-col max-h-[90vh]">
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10 modal-header">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
                     <FileText size={24} />
@@ -1120,7 +1121,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                 <style dangerouslySetInnerHTML={{ __html: `
                   @media print {
                     @page { size: A4; margin: 1cm; }
-                    body { visibility: hidden; background: white !important; }
+                    body { visibility: hidden !important; background: white !important; }
                     #printable-biodata { 
                       visibility: visible !important; 
                       position: absolute !important; 
@@ -1132,10 +1133,11 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                       display: block !important;
                       height: auto !important;
                       overflow: visible !important;
+                      z-index: 9999 !important;
                     }
                     #printable-biodata * { visibility: visible !important; color: black !important; }
-                    .no-print { display: none !important; }
-                    .bg-slate-50, .bg-slate-50\/50, .bg-white { background: white !important; border: 1px solid #e2e8f0 !important; }
+                    .no-print, .modal-header, .modal-footer { display: none !important; }
+                    .bg-slate-50, .bg-slate-50\/50, .bg-white, .bg-amber-50\/50 { background: white !important; border: 1px solid #e2e8f0 !important; }
                     .text-indigo-600 { color: #4f46e5 !important; }
                     .rounded-2xl, .rounded-3xl, .rounded-xl { border-radius: 8px !important; }
                     .shadow-sm, .shadow-md, .shadow-lg, .shadow-2xl { shadow: none !important; box-shadow: none !important; }
@@ -1263,9 +1265,19 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                     ))}
                   </div>
                 </section>
+
+                <section className="pt-8 border-t border-slate-100 space-y-4">
+                  <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
+                    <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                    Catatan / Review Tambahan
+                  </h4>
+                  <div className="bg-amber-50/50 p-6 rounded-2xl border border-amber-100">
+                    <p className="text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">{selectedCPMI.notes || 'Tidak ada catatan tambahan.'}</p>
+                  </div>
+                </section>
               </div>
               
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 modal-footer">
                 <button onClick={() => setIsDetailOpen(false)} className="px-6 py-2.5 text-slate-600 font-bold text-sm hover:bg-slate-100 rounded-lg transition-all">Tutup</button>
                 <button onClick={() => window.print()} className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-sm">
                   <Download size={18} />
@@ -1977,16 +1989,25 @@ const ConfirmModal = ({
 const ProfileModal = ({ 
   isOpen, 
   onClose, 
-  user 
+  user,
+  userProfile
 }: { 
   isOpen: boolean; 
   onClose: () => void; 
   user: User;
+  userProfile: any;
 }) => {
-  const [displayName, setDisplayName] = useState(user.displayName || '');
-  const [photoURL, setPhotoURL] = useState(user.photoURL || '');
+  const [displayName, setDisplayName] = useState(userProfile?.displayName || user.displayName || '');
+  const [photoURL, setPhotoURL] = useState(userProfile?.photoURL || user.photoURL || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setDisplayName(userProfile?.displayName || user.displayName || '');
+      setPhotoURL(userProfile?.photoURL || user.photoURL || '');
+    }
+  }, [isOpen, userProfile, user]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2011,12 +2032,19 @@ const ProfileModal = ({
     setError(null);
 
     try {
+      // Update Auth display name (this is safe)
       await updateProfile(user, {
-        displayName,
-        photoURL
+        displayName
       });
+
+      // Update Firestore profile (handles long base64 strings)
+      await setDoc(doc(db, 'users', user.uid), {
+        displayName,
+        photoURL,
+        updatedAt: Timestamp.now()
+      }, { merge: true });
+
       onClose();
-      window.location.reload(); // Refresh to show changes
     } catch (err) {
       setError('Gagal memperbarui profil. Silakan coba lagi.');
       console.error(err);
@@ -2178,6 +2206,7 @@ const LoginPage = () => {
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -2223,10 +2252,20 @@ export default function App() {
       (err) => handleFirestoreError(err, OperationType.LIST, 'transactions')
     );
 
+    const unsubProfile = onSnapshot(
+      doc(db, 'users', user.uid),
+      (snap) => {
+        if (snap.exists()) {
+          setUserProfile(snap.data());
+        }
+      }
+    );
+
     return () => {
       unsubCpmi();
       unsubSponsors();
       unsubTransactions();
+      unsubProfile();
     };
   }, [user]);
 
@@ -2288,7 +2327,7 @@ export default function App() {
             </div>
             
             <div className="text-right hidden sm:block border-l border-slate-200 pl-6">
-              <p className="text-sm font-bold text-slate-900 leading-none mb-1">{user.displayName}</p>
+              <p className="text-sm font-bold text-slate-900 leading-none mb-1">{userProfile?.displayName || user.displayName}</p>
               <p className="text-[11px] text-slate-500 font-medium">{user.email}</p>
             </div>
             <button 
@@ -2296,7 +2335,7 @@ export default function App() {
               className="relative group transition-transform active:scale-95"
             >
               <img 
-                src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
+                src={userProfile?.photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.displayName || user.displayName}`} 
                 className="w-10 h-10 rounded-xl border border-slate-200 shadow-sm object-cover group-hover:ring-2 group-hover:ring-indigo-500 transition-all" 
                 alt="Avatar" 
               />
@@ -2309,6 +2348,7 @@ export default function App() {
           isOpen={isProfileOpen} 
           onClose={() => setIsProfileOpen(false)} 
           user={user} 
+          userProfile={userProfile}
         />
 
         <div className="p-6 sm:p-10 max-w-7xl mx-auto w-full flex-1">
