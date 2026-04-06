@@ -1120,10 +1120,18 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
               <div id="printable-biodata" className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-10 custom-scrollbar bg-white">
                 <style dangerouslySetInnerHTML={{ __html: `
                   @media print {
-                    @page { size: A4; margin: 1cm; }
-                    body { visibility: hidden !important; background: white !important; }
-                    #printable-biodata { 
+                    @page { size: A4; margin: 1.5cm; }
+                    
+                    /* Hide everything by default */
+                    body * { visibility: hidden !important; }
+                    
+                    /* Show only the printable container and its children */
+                    #printable-biodata, #printable-biodata * { 
                       visibility: visible !important; 
+                    }
+                    
+                    /* Reset container positioning for print */
+                    #printable-biodata { 
                       position: absolute !important; 
                       left: 0 !important; 
                       top: 0 !important; 
@@ -1133,22 +1141,55 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                       display: block !important;
                       height: auto !important;
                       overflow: visible !important;
+                      background: white !important;
                       z-index: 9999 !important;
                     }
-                    #printable-biodata * { visibility: visible !important; color: black !important; }
-                    .no-print, .modal-header, .modal-footer { display: none !important; }
-                    .bg-slate-50, .bg-slate-50\/50, .bg-white, .bg-amber-50\/50 { background: white !important; border: 1px solid #e2e8f0 !important; }
+
+                    /* Hide UI elements that shouldn't be printed */
+                    aside, header, .modal-header, .modal-footer, .no-print, button { 
+                      display: none !important; 
+                    }
+
+                    /* Force colors and backgrounds */
+                    * {
+                      -webkit-print-color-adjust: exact !important;
+                      print-color-adjust: exact !important;
+                      color-adjust: exact !important;
+                    }
+
+                    /* Layout adjustments for print */
+                    .bg-slate-50, .bg-slate-50\/50, .bg-white, .bg-amber-50\/50 { 
+                      background-color: #f8fafc !important; 
+                      border: 1px solid #e2e8f0 !important; 
+                    }
+                    .bg-amber-50\/50 { background-color: #fffbeb !important; }
+                    .bg-indigo-600 { background-color: #4f46e5 !important; }
                     .text-indigo-600 { color: #4f46e5 !important; }
-                    .rounded-2xl, .rounded-3xl, .rounded-xl { border-radius: 8px !important; }
-                    .shadow-sm, .shadow-md, .shadow-lg, .shadow-2xl { shadow: none !important; box-shadow: none !important; }
-                    img { max-width: 180px !important; height: auto !important; border-radius: 4px !important; }
-                    .grid { display: grid !important; gap: 1rem !important; }
-                    .md\:grid-cols-3 { grid-template-columns: 1fr 2fr !important; }
+                    
+                    .grid { display: grid !important; gap: 1.5rem !important; }
+                    .md\:grid-cols-3 { grid-template-columns: 200px 1fr !important; }
                     .md\:col-span-2 { grid-column: span 2 !important; }
                     .sm\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
-                    section { break-inside: avoid !important; margin-bottom: 1.5rem !important; }
-                    .p-6, .p-10 { padding: 0.5rem !important; }
-                    .gap-8, .gap-10 { gap: 1rem !important; }
+                    
+                    /* Prevent content cutting */
+                    section { 
+                      break-inside: avoid !important; 
+                      page-break-inside: avoid !important;
+                      margin-bottom: 2rem !important; 
+                      display: block !important;
+                    }
+                    
+                    img { 
+                      max-width: 180px !important; 
+                      height: auto !important; 
+                      border-radius: 12px !important; 
+                      display: block !important;
+                    }
+
+                    h3 { font-size: 24pt !important; margin-bottom: 8pt !important; }
+                    h4 { font-size: 14pt !important; margin-bottom: 12pt !important; border-bottom: 2px solid #4f46e5 !important; padding-bottom: 4pt !important; }
+                    p { font-size: 11pt !important; color: #1e293b !important; }
+                    .text-slate-400 { color: #64748b !important; }
                   }
                 `}} />
                 
