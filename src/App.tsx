@@ -485,7 +485,7 @@ const Dashboard = ({ cpmi, sponsors, transactions }: { cpmi: CPMI[], sponsors: S
   );
 };
 
-const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: Sponsor[], currentCompany: string }) => {
+const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI[], sponsors: Sponsor[], transactions: Transaction[], currentCompany: string }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -494,6 +494,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
   const [editingCPMI, setEditingCPMI] = useState<CPMI | null>(null);
   const [selectedCPMI, setSelectedCPMI] = useState<CPMI | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -508,15 +509,12 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 500000) { // 500KB limit for base64 in Firestore
-        alert('Ukuran foto terlalu besar. Maksimal 500KB.');
+      if (file.size > 2000000) { // 2MB limit for Storage is fine
+        alert('Ukuran foto terlalu besar. Maksimal 2MB.');
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -541,12 +539,19 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
     const formData = new FormData(e.currentTarget);
     
     let pdfUrl = editingCPMI?.pdfUrl || '';
+    let photoUrl = editingCPMI?.photo || '';
 
     try {
       if (pdfFile) {
         const storageRef = ref(storage, `cpmi_docs/${Date.now()}_${pdfFile.name}`);
         const snapshot = await uploadBytes(storageRef, pdfFile);
         pdfUrl = await getDownloadURL(snapshot.ref);
+      }
+
+      if (photoFile) {
+        const photoRef = ref(storage, `cpmi_photos/${Date.now()}_${photoFile.name}`);
+        const snapshot = await uploadBytes(photoRef, photoFile);
+        photoUrl = await getDownloadURL(snapshot.ref);
       }
 
       const data = {
@@ -558,7 +563,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
         country: formData.get('country') as string,
         sponsorId: formData.get('sponsorId') as string,
         processStatus: formData.get('processStatus') as string || 'Proses',
-        photo: photoPreview || editingCPMI?.photo || '',
+        photo: photoUrl,
         pdfUrl: pdfUrl,
         address: formData.get('address') as string,
         religion: formData.get('religion') as string,
@@ -616,6 +621,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
       setIsModalOpen(false);
       setEditingCPMI(null);
       setPhotoPreview(null);
+      setPhotoFile(null);
       setPdfFile(null);
     } catch (error) {
       handleFirestoreError(error, editingCPMI ? OperationType.UPDATE : OperationType.CREATE, 'cpmi');
@@ -635,15 +641,61 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
   };
 
   const exportToCSV = () => {
-    const headers = ['Nama Lengkap', 'No Registrasi', 'No HP', 'Negara', 'Sponsor', 'Status', 'Proses'];
+    const headers = [
+      'Nama Lengkap', 'No Registrasi', 'No HP', 'Tanggal Daftar', 'Negara', 'Sponsor', 'Status Berkas', 'Proses',
+      'Alamat', 'Agama', 'Umur', 'Tempat Lahir', 'Tanggal Lahir', 'Tinggi', 'Berat',
+      'Nama Bapak', 'Nama Ibu', 'Nama Pasangan', 'Pekerjaan', 'Saudara', 'Anak Ke', 'Pendidikan', 'Status Nikah', 'Jumlah Anak',
+      'Mandarin', 'English', 'Cantonese',
+      'KTP', 'KK', 'Akta Lahir', 'Buku Nikah', 'Surat Ijin', 'Ijasah', 'Akta Cerai', 'Paspor',
+      'Pengalaman Kerja',
+      'Restu Keluarga', 'Selesai Kontrak', 'Biaya Pulang', 'Kerja Hari Libur', 'Makan Babi', 'Pegang Babi',
+      'Catatan'
+    ];
+    
     const rows = filteredCPMI.map(p => [
       p.fullName,
       p.registrationNumber,
       p.phone || '-',
+      p.registrationDate,
       p.country,
       sponsors.find(s => s.id === p.sponsorId)?.name || '-',
       p.documentStatus,
-      p.processStatus || 'Proses'
+      p.processStatus || 'Proses',
+      p.address || '-',
+      p.religion || '-',
+      p.age || '-',
+      p.pob || '-',
+      p.dob || '-',
+      p.height || '-',
+      p.weight || '-',
+      p.fatherName || '-',
+      p.motherName || '-',
+      p.spouseName || '-',
+      p.occupation || '-',
+      p.siblingsCount || '-',
+      p.birthOrder || '-',
+      p.education || '-',
+      p.maritalStatus || '-',
+      p.childrenCount || '-',
+      p.languages?.mandarin ? 'Ya' : 'Tidak',
+      p.languages?.english ? 'Ya' : 'Tidak',
+      p.languages?.cantonese ? 'Ya' : 'Tidak',
+      p.documents?.ktp ? 'Ya' : 'Tidak',
+      p.documents?.kk ? 'Ya' : 'Tidak',
+      p.documents?.aktaLahir ? 'Ya' : 'Tidak',
+      p.documents?.bukuNikah ? 'Ya' : 'Tidak',
+      p.documents?.suratIjin ? 'Ya' : 'Tidak',
+      p.documents?.ijasah ? 'Ya' : 'Tidak',
+      p.documents?.aktaCerai ? 'Ya' : 'Tidak',
+      p.documents?.paspor ? 'Ya' : 'Tidak',
+      p.workExperience || '-',
+      p.terms?.familyConsent ? 'Ya' : 'Tidak',
+      p.terms?.contractCompletion ? 'Ya' : 'Tidak',
+      p.terms?.returnCosts ? 'Ya' : 'Tidak',
+      p.terms?.holidayWork ? 'Ya' : 'Tidak',
+      p.terms?.eatPork ? 'Ya' : 'Tidak',
+      p.terms?.handlePork ? 'Ya' : 'Tidak',
+      p.notes || '-'
     ]);
 
     const csvContent = "\uFEFF" + [
@@ -655,7 +707,39 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `data_cpmi_${currentCompany}_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.setAttribute('download', `data_lengkap_cpmi_${currentCompany}_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportFinancialHistory = (person: CPMI) => {
+    const personTransactions = transactions.filter(t => t.cpmiId === person.id);
+    if (personTransactions.length === 0) {
+      alert('Belum ada data keuangan untuk CPMI ini.');
+      return;
+    }
+
+    const headers = ['Tanggal', 'Tipe', 'Kategori', 'Deskripsi', 'Jumlah'];
+    const rows = personTransactions.map(t => [
+      format(t.date.toDate(), 'dd/MM/yyyy'),
+      t.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+      t.category,
+      t.description,
+      t.amount
+    ]);
+
+    const csvContent = "\uFEFF" + [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `keuangan_${person.fullName.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -678,7 +762,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
             <span>Ekspor CSV</span>
           </button>
           <button 
-            onClick={() => { setEditingCPMI(null); setPhotoPreview(null); setIsModalOpen(true); }}
+            onClick={() => { setEditingCPMI(null); setPhotoPreview(null); setPhotoFile(null); setPdfFile(null); setIsModalOpen(true); }}
             className="flex-1 sm:flex-none bg-indigo-600 text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all font-semibold text-sm shadow-sm"
           >
             <Plus size={18} />
@@ -765,7 +849,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                         <FileText size={18} />
                       </button>
                       <button 
-                        onClick={() => { setEditingCPMI(person); setPhotoPreview(person.photo || null); setIsModalOpen(true); }}
+                        onClick={() => { setEditingCPMI(person); setPhotoPreview(person.photo || null); setPhotoFile(null); setPdfFile(null); setIsModalOpen(true); }}
                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                         title="Edit"
                       >
@@ -841,7 +925,7 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                   Detail
                 </button>
                 <button 
-                  onClick={() => { setEditingCPMI(person); setPhotoPreview(person.photo || null); setIsModalOpen(true); }}
+                  onClick={() => { setEditingCPMI(person); setPhotoPreview(person.photo || null); setPhotoFile(null); setPdfFile(null); setIsModalOpen(true); }}
                   className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-lg flex items-center justify-center gap-2 font-bold uppercase text-[10px] tracking-wider hover:bg-slate-100 transition-all border border-slate-200"
                 >
                   <Edit2 size={14} />
@@ -1399,6 +1483,47 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                   </div>
                 </section>
 
+                <section className="pt-8 border-t border-slate-100 space-y-4 no-print">
+                  <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
+                    <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                    Riwayat Keuangan CPMI
+                  </h4>
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">Data Transaksi</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total {transactions.filter(t => t.cpmiId === selectedCPMI.id).length} Transaksi</p>
+                      </div>
+                      <button 
+                        onClick={() => exportFinancialHistory(selectedCPMI)}
+                        className="bg-white text-emerald-600 border border-emerald-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-50 transition-all flex items-center gap-2"
+                      >
+                        <Download size={14} />
+                        Ekspor Keuangan
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                      {transactions.filter(t => t.cpmiId === selectedCPMI.id).map(t => (
+                        <div key={t.id} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl">
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">{t.description}</p>
+                            <p className="text-[10px] text-slate-500 font-medium">{format(t.date.toDate(), 'dd MMM yyyy')} • {t.category}</p>
+                          </div>
+                          <p className={cn(
+                            "text-xs font-bold",
+                            t.type === 'income' ? "text-emerald-600" : "text-red-600"
+                          )}>
+                            {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
+                          </p>
+                        </div>
+                      ))}
+                      {transactions.filter(t => t.cpmiId === selectedCPMI.id).length === 0 && (
+                        <p className="text-center py-4 text-xs text-slate-400 italic">Belum ada riwayat transaksi.</p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
                 {selectedCPMI.pdfUrl && (
                   <section className="pt-8 border-t border-slate-100 space-y-4 no-print">
                     <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
@@ -1635,12 +1760,18 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [type, setType] = useState<'income' | 'expense'>('income');
+  const [filterCpmiId, setFilterCpmiId] = useState<string>('');
 
   useEffect(() => {
     if (editingTransaction) {
       setType(editingTransaction.type);
     }
   }, [editingTransaction]);
+
+  const filteredTransactions = useMemo(() => {
+    if (!filterCpmiId) return transactions;
+    return transactions.filter(t => t.cpmiId === filterCpmiId);
+  }, [transactions, filterCpmiId]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -1688,13 +1819,28 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Keuangan</h2>
           <p className="text-slate-500 text-sm">Catat pemasukan dan pengeluaran operasional secara digital.</p>
         </div>
-        <button 
-          onClick={() => { setEditingTransaction(null); setType('income'); setIsModalOpen(true); }}
-          className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-emerald-700 transition-all duration-300 shadow-lg shadow-emerald-600/20 font-bold"
-        >
-          <Plus size={20} />
-          <span>Tambah Transaksi</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <select 
+              value={filterCpmiId}
+              onChange={(e) => setFilterCpmiId(e.target.value)}
+              className="bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 appearance-none pr-10 min-w-[200px]"
+            >
+              <option value="">Semua CPMI</option>
+              {cpmi.map(p => (
+                <option key={p.id} value={p.id}>{p.fullName}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+          </div>
+          <button 
+            onClick={() => { setEditingTransaction(null); setType('income'); setIsModalOpen(true); }}
+            className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-emerald-700 transition-all duration-300 shadow-lg shadow-emerald-600/20 font-bold"
+          >
+            <Plus size={20} />
+            <span>Tambah Transaksi</span>
+          </button>
+        </div>
       </header>
 
       <div className="card-saas overflow-hidden">
@@ -1712,7 +1858,7 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {transactions.map((t) => (
+              {filteredTransactions.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50/50 transition-all duration-300 group">
                   <td className="px-6 py-4 text-slate-600 text-sm font-medium">
                     {format(t.date.toDate(), 'dd/MM/yyyy')}
@@ -1760,7 +1906,7 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
 
         {/* Mobile View */}
         <div className="md:hidden p-4 space-y-4">
-          {transactions.map((t) => (
+          {filteredTransactions.map((t) => (
             <div key={t.id} className="bg-slate-50 rounded-2xl border border-slate-100 p-5 space-y-4">
               <div className="flex items-start justify-between">
                 <div>
@@ -1802,7 +1948,7 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
           ))}
         </div>
 
-        {transactions.length === 0 && (
+        {filteredTransactions.length === 0 && (
           <div className="p-20 text-center text-slate-500 font-bold uppercase tracking-widest">Belum ada data transaksi.</div>
         )}
       </div>
@@ -2516,7 +2662,7 @@ export default function App() {
 
           <Routes>
             <Route path="/" element={<Dashboard cpmi={filteredCpmi} sponsors={sponsors} transactions={filteredTransactions} />} />
-            <Route path="/cpmi" element={<CPMIPage cpmi={filteredCpmi} sponsors={sponsors} currentCompany={currentCompany} />} />
+            <Route path="/cpmi" element={<CPMIPage cpmi={filteredCpmi} sponsors={sponsors} transactions={filteredTransactions} currentCompany={currentCompany} />} />
             <Route path="/sponsors" element={<SponsorsPage sponsors={sponsors} />} />
             <Route path="/transactions" element={<TransactionsPage transactions={filteredTransactions} cpmi={filteredCpmi} />} />
             <Route path="/reports" element={<ReportsPage transactions={filteredTransactions} />} />
