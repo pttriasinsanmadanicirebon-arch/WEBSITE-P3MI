@@ -50,7 +50,8 @@ import {
   Filter,
   Download,
   X,
-  ChevronDown
+  ChevronDown,
+  UserCheck
 } from 'lucide-react';
 import { 
   ref, 
@@ -255,13 +256,13 @@ const BottomNav = () => {
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
 
   const leftItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/', icon: LayoutDashboard, label: 'Beranda' },
     { path: '/cpmi', icon: Users, label: 'CPMI' },
   ];
 
   const rightItems = [
+    { path: '/sponsors', icon: UserCheck, label: 'Sponsor' },
     { path: '/transactions', icon: Wallet, label: 'Keuangan' },
-    { path: '/reports', icon: FileText, label: 'Laporan' },
   ];
 
   const handleLogout = async () => {
@@ -280,84 +281,143 @@ const BottomNav = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsQuickActionOpen(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60]"
             />
             <motion.div
-              initial={{ opacity: 0, y: 100, scale: 0.8 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 100, scale: 0.8 }}
-              className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[70] flex flex-col gap-4 items-center"
+              initial={{ opacity: 0, y: 40, scale: 0.9, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, scale: 1, x: '-50%' }}
+              exit={{ opacity: 0, y: 40, scale: 0.9, x: '-50%' }}
+              className="fixed bottom-32 left-1/2 z-[70] w-[90%] max-w-xs bg-white/90 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-4 flex flex-col gap-2"
             >
+              <div className="px-4 py-2 mb-2 border-b border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Menu Cepat</p>
+              </div>
               <button 
                 onClick={() => { setIsQuickActionOpen(false); navigate('/cpmi'); }}
-                className="bg-white text-slate-900 px-6 py-3 rounded-2xl font-bold shadow-2xl flex items-center gap-3 hover:bg-indigo-50 transition-colors border border-slate-100"
+                className="w-full bg-slate-50/50 text-slate-900 px-6 py-4 rounded-2xl font-bold flex items-center gap-4 hover:bg-indigo-50 transition-all active:scale-[0.98] border border-slate-100/50"
               >
-                <Users size={20} className="text-indigo-600" />
-                Tambah CPMI
+                <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
+                  <Users size={20} />
+                </div>
+                <span className="text-sm">Tambah CPMI</span>
               </button>
               <button 
                 onClick={() => { setIsQuickActionOpen(false); navigate('/transactions'); }}
-                className="bg-white text-slate-900 px-6 py-3 rounded-2xl font-bold shadow-2xl flex items-center gap-3 hover:bg-indigo-50 transition-colors border border-slate-100"
+                className="w-full bg-slate-50/50 text-slate-900 px-6 py-4 rounded-2xl font-bold flex items-center gap-4 hover:bg-indigo-50 transition-all active:scale-[0.98] border border-slate-100/50"
               >
-                <Wallet size={20} className="text-indigo-600" />
-                Tambah Transaksi
+                <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                  <Wallet size={20} />
+                </div>
+                <span className="text-sm">Tambah Transaksi</span>
               </button>
               <button 
-                onClick={handleLogout}
-                className="bg-red-50 text-red-600 px-6 py-3 rounded-2xl font-bold shadow-2xl flex items-center gap-3 hover:bg-red-100 transition-colors border border-red-100"
+                onClick={() => { setIsQuickActionOpen(false); navigate('/reports'); }}
+                className="w-full bg-slate-50/50 text-slate-900 px-6 py-4 rounded-2xl font-bold flex items-center gap-4 hover:bg-indigo-50 transition-all active:scale-[0.98] border border-slate-100/50"
               >
-                <LogOut size={20} />
-                Keluar
+                <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
+                  <FileText size={20} />
+                </div>
+                <span className="text-sm">Lihat Laporan</span>
+              </button>
+              <div className="h-px bg-slate-100 my-2 mx-4" />
+              <button 
+                onClick={handleLogout}
+                className="w-full bg-red-50/50 text-red-600 px-6 py-4 rounded-2xl font-bold flex items-center gap-4 hover:bg-red-100 transition-all active:scale-[0.98] border border-red-100/30"
+              >
+                <div className="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center">
+                  <LogOut size={20} />
+                </div>
+                <span className="text-sm">Keluar Sesi</span>
               </button>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-lg h-20 bg-slate-900/90 backdrop-blur-xl rounded-[2.5rem] border border-white/10 shadow-2xl flex items-center justify-between px-4 sm:px-8">
-        <div className="flex items-center gap-4 sm:gap-8 flex-1 justify-around">
-          {leftItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex flex-col items-center gap-1 transition-all duration-300",
-                location.pathname === item.path ? "text-indigo-400 scale-110" : "text-slate-400 hover:text-slate-200"
-              )}
-            >
-              <item.icon size={22} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
-            </Link>
-          ))}
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-lg h-20 bg-slate-900/95 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center justify-between px-2">
+        <div className="flex items-center flex-1 justify-around">
+          {leftItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "relative flex flex-col items-center justify-center w-16 h-16 transition-all duration-500 rounded-2xl",
+                  isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
+                )}
+              >
+                {isActive && (
+                  <motion.div 
+                    layoutId="nav-pill"
+                    className="absolute inset-0 bg-white/10 rounded-2xl"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <item.icon size={20} className={cn("z-10 transition-transform duration-300", isActive && "scale-110")} />
+                <span className={cn("text-[8px] font-black uppercase tracking-widest mt-1 z-10 transition-all", isActive ? "opacity-100" : "opacity-60")}>
+                  {item.label}
+                </span>
+                {isActive && (
+                  <motion.div 
+                    layoutId="nav-dot"
+                    className="absolute -bottom-1 w-1 h-1 bg-indigo-400 rounded-full shadow-[0_0_8px_rgba(129,140,248,0.8)]"
+                  />
+                )}
+              </Link>
+            );
+          })}
         </div>
 
-        {/* Floating Plus Button */}
-        <div className="relative -top-8">
-          <button
-            onClick={() => setIsQuickActionOpen(!isQuickActionOpen)}
-            className={cn(
-              "w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/40 flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 border-4 border-slate-900",
-              isQuickActionOpen ? "rotate-45" : "rotate-0"
-            )}
-          >
-            <Plus size={32} strokeWidth={3} />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-4 sm:gap-8 flex-1 justify-around">
-          {rightItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
+        {/* Floating Action Button */}
+        <div className="relative flex items-center justify-center w-20">
+          <div className="absolute -top-10">
+            <button
+              onClick={() => setIsQuickActionOpen(!isQuickActionOpen)}
               className={cn(
-                "flex flex-col items-center gap-1 transition-all duration-300",
-                location.pathname === item.path ? "text-indigo-400 scale-110" : "text-slate-400 hover:text-slate-200"
+                "w-16 h-16 rounded-[2rem] bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white shadow-[0_10px_25px_rgba(99,102,241,0.4)] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-90 border-[6px] border-slate-900 group",
+                isQuickActionOpen ? "rotate-[135deg] shadow-none" : "rotate-0"
               )}
             >
-              <item.icon size={22} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
-            </Link>
-          ))}
+              <Plus size={32} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-500" />
+            </button>
+            {/* Subtle Glow behind button */}
+            <div className="absolute inset-0 -z-10 bg-indigo-500/20 blur-2xl rounded-full animate-pulse" />
+          </div>
+        </div>
+
+        <div className="flex items-center flex-1 justify-around">
+          {rightItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "relative flex flex-col items-center justify-center w-16 h-16 transition-all duration-500 rounded-2xl",
+                  isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
+                )}
+              >
+                {isActive && (
+                  <motion.div 
+                    layoutId="nav-pill"
+                    className="absolute inset-0 bg-white/10 rounded-2xl"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <item.icon size={20} className={cn("z-10 transition-transform duration-300", isActive && "scale-110")} />
+                <span className={cn("text-[8px] font-black uppercase tracking-widest mt-1 z-10 transition-all", isActive ? "opacity-100" : "opacity-60")}>
+                  {item.label}
+                </span>
+                {isActive && (
+                  <motion.div 
+                    layoutId="nav-dot"
+                    className="absolute -bottom-1 w-1 h-1 bg-indigo-400 rounded-full shadow-[0_0_8px_rgba(129,140,248,0.8)]"
+                  />
+                )}
+              </Link>
+            );
+          })}
         </div>
       </nav>
     </>
@@ -486,6 +546,7 @@ const Dashboard = ({ cpmi, sponsors, transactions }: { cpmi: CPMI[], sponsors: S
 };
 
 const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI[], sponsors: Sponsor[], transactions: Transaction[], currentCompany: string }) => {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -1036,7 +1097,16 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
                         </select>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Sponsor</label>
+                        <div className="flex items-center justify-between px-1">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sponsor</label>
+                          <button 
+                            type="button"
+                            onClick={() => { setIsModalOpen(false); navigate('/sponsors'); }}
+                            className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider hover:underline"
+                          >
+                            + Tambah
+                          </button>
+                        </div>
                         <select name="sponsorId" defaultValue={editingCPMI?.sponsorId} required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm">
                           {sponsors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
