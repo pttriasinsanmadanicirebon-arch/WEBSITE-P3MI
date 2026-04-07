@@ -52,11 +52,16 @@ import {
   X,
   ChevronDown
 } from 'lucide-react';
+import { 
+  ref, 
+  uploadBytes, 
+  getDownloadURL 
+} from 'firebase/storage';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
-import { db, auth } from './firebase';
+import { db, auth, storage } from './firebase';
 import { cn, formatCurrency } from './lib/utils';
 
 // --- Types ---
@@ -142,6 +147,7 @@ interface CPMI {
   };
   documentStatus: string;
   notes: string;
+  pdfUrl?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -488,6 +494,8 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
   const [editingCPMI, setEditingCPMI] = useState<CPMI | null>(null);
   const [selectedCPMI, setSelectedCPMI] = useState<CPMI | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const filteredCPMI = useMemo(() => {
     return cpmi.filter(p => 
@@ -512,66 +520,91 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
     }
   };
 
+  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        alert('Hanya file PDF yang diperbolehkan.');
+        return;
+      }
+      if (file.size > 5000000) { // 5MB limit
+        alert('Ukuran file PDF terlalu besar. Maksimal 5MB.');
+        return;
+      }
+      setPdfFile(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsUploading(true);
     const formData = new FormData(e.currentTarget);
     
-    const data = {
-      company: currentCompany,
-      fullName: formData.get('fullName') as string,
-      registrationNumber: formData.get('registrationNumber') as string,
-      registrationDate: formData.get('registrationDate') as string,
-      phone: formData.get('phone') as string,
-      country: formData.get('country') as string,
-      sponsorId: formData.get('sponsorId') as string,
-      processStatus: formData.get('processStatus') as string || 'Proses',
-      photo: photoPreview || editingCPMI?.photo || '',
-      address: formData.get('address') as string,
-      religion: formData.get('religion') as string,
-      age: Number(formData.get('age')),
-      pob: formData.get('pob') as string,
-      dob: formData.get('dob') as string,
-      height: Number(formData.get('height')),
-      weight: Number(formData.get('weight')),
-      fatherName: formData.get('fatherName') as string,
-      motherName: formData.get('motherName') as string,
-      spouseName: formData.get('spouseName') as string,
-      occupation: formData.get('occupation') as string,
-      siblingsCount: Number(formData.get('siblingsCount')),
-      birthOrder: Number(formData.get('birthOrder')),
-      education: formData.get('education') as string,
-      maritalStatus: formData.get('maritalStatus') as string,
-      childrenCount: Number(formData.get('childrenCount')),
-      languages: {
-        mandarin: formData.get('lang_mandarin') === 'on',
-        english: formData.get('lang_english') === 'on',
-        cantonese: formData.get('lang_cantonese') === 'on',
-      },
-      documents: {
-        ktp: formData.get('doc_ktp') === 'on',
-        kk: formData.get('doc_kk') === 'on',
-        aktaLahir: formData.get('doc_aktaLahir') === 'on',
-        bukuNikah: formData.get('doc_bukuNikah') === 'on',
-        suratIjin: formData.get('doc_suratIjin') === 'on',
-        ijasah: formData.get('doc_ijasah') === 'on',
-        aktaCerai: formData.get('doc_aktaCerai') === 'on',
-        paspor: formData.get('doc_paspor') === 'on',
-      },
-      workExperience: formData.get('workExperience') as string,
-      terms: {
-        familyConsent: formData.get('term_familyConsent') === 'on',
-        contractCompletion: formData.get('term_contractCompletion') === 'on',
-        returnCosts: formData.get('term_returnCosts') === 'on',
-        holidayWork: formData.get('term_holidayWork') === 'on',
-        eatPork: formData.get('term_eatPork') === 'on',
-        handlePork: formData.get('term_handlePork') === 'on',
-      },
-      documentStatus: formData.get('documentStatus') as string,
-      notes: formData.get('notes') as string,
-      updatedAt: Timestamp.now(),
-    };
+    let pdfUrl = editingCPMI?.pdfUrl || '';
 
     try {
+      if (pdfFile) {
+        const storageRef = ref(storage, `cpmi_docs/${Date.now()}_${pdfFile.name}`);
+        const snapshot = await uploadBytes(storageRef, pdfFile);
+        pdfUrl = await getDownloadURL(snapshot.ref);
+      }
+
+      const data = {
+        company: currentCompany,
+        fullName: formData.get('fullName') as string,
+        registrationNumber: formData.get('registrationNumber') as string,
+        registrationDate: formData.get('registrationDate') as string,
+        phone: formData.get('phone') as string,
+        country: formData.get('country') as string,
+        sponsorId: formData.get('sponsorId') as string,
+        processStatus: formData.get('processStatus') as string || 'Proses',
+        photo: photoPreview || editingCPMI?.photo || '',
+        pdfUrl: pdfUrl,
+        address: formData.get('address') as string,
+        religion: formData.get('religion') as string,
+        age: Number(formData.get('age')),
+        pob: formData.get('pob') as string,
+        dob: formData.get('dob') as string,
+        height: Number(formData.get('height')),
+        weight: Number(formData.get('weight')),
+        fatherName: formData.get('fatherName') as string,
+        motherName: formData.get('motherName') as string,
+        spouseName: formData.get('spouseName') as string,
+        occupation: formData.get('occupation') as string,
+        siblingsCount: Number(formData.get('siblingsCount')),
+        birthOrder: Number(formData.get('birthOrder')),
+        education: formData.get('education') as string,
+        maritalStatus: formData.get('maritalStatus') as string,
+        childrenCount: Number(formData.get('childrenCount')),
+        languages: {
+          mandarin: formData.get('lang_mandarin') === 'on',
+          english: formData.get('lang_english') === 'on',
+          cantonese: formData.get('lang_cantonese') === 'on',
+        },
+        documents: {
+          ktp: formData.get('doc_ktp') === 'on',
+          kk: formData.get('doc_kk') === 'on',
+          aktaLahir: formData.get('doc_aktaLahir') === 'on',
+          bukuNikah: formData.get('doc_bukuNikah') === 'on',
+          suratIjin: formData.get('doc_suratIjin') === 'on',
+          ijasah: formData.get('doc_ijasah') === 'on',
+          aktaCerai: formData.get('doc_aktaCerai') === 'on',
+          paspor: formData.get('doc_paspor') === 'on',
+        },
+        workExperience: formData.get('workExperience') as string,
+        terms: {
+          familyConsent: formData.get('term_familyConsent') === 'on',
+          contractCompletion: formData.get('term_contractCompletion') === 'on',
+          returnCosts: formData.get('term_returnCosts') === 'on',
+          holidayWork: formData.get('term_holidayWork') === 'on',
+          eatPork: formData.get('term_eatPork') === 'on',
+          handlePork: formData.get('term_handlePork') === 'on',
+        },
+        documentStatus: formData.get('documentStatus') as string,
+        notes: formData.get('notes') as string,
+        updatedAt: Timestamp.now(),
+      };
+
       if (editingCPMI) {
         await updateDoc(doc(db, 'cpmi', editingCPMI.id), data);
       } else {
@@ -583,8 +616,11 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
       setIsModalOpen(false);
       setEditingCPMI(null);
       setPhotoPreview(null);
+      setPdfFile(null);
     } catch (error) {
       handleFirestoreError(error, editingCPMI ? OperationType.UPDATE : OperationType.CREATE, 'cpmi');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -1103,9 +1139,29 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                   <textarea name="notes" defaultValue={editingCPMI?.notes} rows={3} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-700 font-medium text-sm" />
                 </div>
 
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Upload Berkas PDF</label>
+                  <div className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-slate-700">{pdfFile ? pdfFile.name : editingCPMI?.pdfUrl ? 'Berkas PDF sudah ada' : 'Belum ada berkas PDF'}</p>
+                      <p className="text-[10px] text-slate-500 font-medium">Format: PDF (Maks. 5MB)</p>
+                    </div>
+                    <label className="bg-white text-indigo-600 border border-indigo-200 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-indigo-50 transition-all">
+                      Pilih File
+                      <input type="file" accept="application/pdf" onChange={handlePdfChange} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+
                 <div className="pt-6 flex flex-col sm:flex-row gap-3 sticky bottom-0 bg-white pb-4">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all">Batal</button>
-                  <button type="submit" className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-sm">Simpan Data Biodata</button>
+                  <button 
+                    type="submit" 
+                    disabled={isUploading}
+                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-sm disabled:opacity-50"
+                  >
+                    {isUploading ? 'Sedang Mengunggah...' : 'Simpan Data Biodata'}
+                  </button>
                 </div>
               </form>
             </motion.div>
@@ -1342,6 +1398,35 @@ const CPMIPage = ({ cpmi, sponsors, currentCompany }: { cpmi: CPMI[], sponsors: 
                     <p className="text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">{selectedCPMI.notes || 'Tidak ada catatan tambahan.'}</p>
                   </div>
                 </section>
+
+                {selectedCPMI.pdfUrl && (
+                  <section className="pt-8 border-t border-slate-100 space-y-4 no-print">
+                    <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
+                      <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                      Berkas PDF Terlampir
+                    </h4>
+                    <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-50 text-red-600 rounded-lg flex items-center justify-center border border-red-100">
+                          <FileText size={20} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">Berkas Dokumen CPMI</p>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Format: PDF</p>
+                        </div>
+                      </div>
+                      <a 
+                        href={selectedCPMI.pdfUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="bg-white text-indigo-600 border border-indigo-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-all flex items-center gap-2"
+                      >
+                        <Download size={14} />
+                        Unduh PDF
+                      </a>
+                    </div>
+                  </section>
+                )}
               </div>
               
               <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 modal-footer">
