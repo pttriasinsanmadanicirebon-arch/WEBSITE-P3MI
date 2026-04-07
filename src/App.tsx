@@ -49,7 +49,6 @@ import {
   Clock,
   Filter,
   Download,
-  Menu,
   X,
   ChevronDown
 } from 'lucide-react';
@@ -244,14 +243,17 @@ const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolean) => void }) => {
+const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
 
-  const menuItems = [
+  const leftItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/cpmi', icon: Users, label: 'Data CPMI' },
-    { path: '/sponsors', icon: Briefcase, label: 'Data Sponsor' },
+    { path: '/cpmi', icon: Users, label: 'CPMI' },
+  ];
+
+  const rightItems = [
     { path: '/transactions', icon: Wallet, label: 'Keuangan' },
     { path: '/reports', icon: FileText, label: 'Laporan' },
   ];
@@ -263,71 +265,95 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolea
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Quick Action Overlay */}
       <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 lg:hidden"
-          />
+        {isQuickActionOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsQuickActionOpen(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 100, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 100, scale: 0.8 }}
+              className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[70] flex flex-col gap-4 items-center"
+            >
+              <button 
+                onClick={() => { setIsQuickActionOpen(false); navigate('/cpmi'); }}
+                className="bg-white text-slate-900 px-6 py-3 rounded-2xl font-bold shadow-2xl flex items-center gap-3 hover:bg-indigo-50 transition-colors border border-slate-100"
+              >
+                <Users size={20} className="text-indigo-600" />
+                Tambah CPMI
+              </button>
+              <button 
+                onClick={() => { setIsQuickActionOpen(false); navigate('/transactions'); }}
+                className="bg-white text-slate-900 px-6 py-3 rounded-2xl font-bold shadow-2xl flex items-center gap-3 hover:bg-indigo-50 transition-colors border border-slate-100"
+              >
+                <Wallet size={20} className="text-indigo-600" />
+                Tambah Transaksi
+              </button>
+              <button 
+                onClick={handleLogout}
+                className="bg-red-50 text-red-600 px-6 py-3 rounded-2xl font-bold shadow-2xl flex items-center gap-3 hover:bg-red-100 transition-colors border border-red-100"
+              >
+                <LogOut size={20} />
+                Keluar
+              </button>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 bg-white text-slate-900 transition-transform duration-500 transform lg:translate-x-0 border-r border-slate-200 shadow-sm",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="p-8 flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-              <span className="font-bold text-xl text-white">P3</span>
-            </div>
-            <h1 className="font-bold text-xl tracking-tight text-slate-900">P3MI <span className="text-indigo-600">APP</span></h1>
-          </div>
-
-          <nav className="flex-1 space-y-1">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setIsOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative",
-                  location.pathname === item.path 
-                    ? "bg-indigo-50 text-indigo-600 font-semibold" 
-                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                )}
-              >
-                <item.icon size={20} className={cn(
-                  "transition-colors",
-                  location.pathname === item.path ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
-                )} />
-                <span className="text-sm">{item.label}</span>
-                {location.pathname === item.path && (
-                  <motion.div 
-                    layoutId="active-pill"
-                    className="absolute right-0 w-1 h-5 bg-indigo-600 rounded-full"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="pt-6 border-t border-slate-100">
-            <button 
-              onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 text-slate-500 hover:text-red-600 transition-all duration-200 rounded-xl hover:bg-red-50 group"
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-lg h-20 bg-slate-900/90 backdrop-blur-xl rounded-[2.5rem] border border-white/10 shadow-2xl flex items-center justify-between px-4 sm:px-8">
+        <div className="flex items-center gap-4 sm:gap-8 flex-1 justify-around">
+          {leftItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center gap-1 transition-all duration-300",
+                location.pathname === item.path ? "text-indigo-400 scale-110" : "text-slate-400 hover:text-slate-200"
+              )}
             >
-              <LogOut size={20} className="group-hover:-translate-x-1 transition-transform" />
-              <span className="text-sm font-medium">Keluar</span>
-            </button>
-          </div>
+              <item.icon size={22} />
+              <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+            </Link>
+          ))}
         </div>
-      </aside>
+
+        {/* Floating Plus Button */}
+        <div className="relative -top-8">
+          <button
+            onClick={() => setIsQuickActionOpen(!isQuickActionOpen)}
+            className={cn(
+              "w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/40 flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-95 border-4 border-slate-900",
+              isQuickActionOpen ? "rotate-45" : "rotate-0"
+            )}
+          >
+            <Plus size={32} strokeWidth={3} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4 sm:gap-8 flex-1 justify-around">
+          {rightItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center gap-1 transition-all duration-300",
+                location.pathname === item.path ? "text-indigo-400 scale-110" : "text-slate-400 hover:text-slate-200"
+              )}
+            >
+              <item.icon size={22} />
+              <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
     </>
   );
 };
@@ -2249,7 +2275,6 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [currentCompany, setCurrentCompany] = useState<string>('PT Trias Insan Madani Cirebon');
 
@@ -2332,19 +2357,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Router>
-    <div className="min-h-screen bg-slate-50 flex">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <BottomNav />
       
-      <main className="flex-1 lg:ml-72 min-h-screen flex flex-col">
+      <main className="flex-1 min-h-screen flex flex-col pb-32">
         <header className="h-20 bg-white border-b border-slate-200 px-6 sm:px-10 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-            >
-              <Menu size={24} />
-            </button>
-            <div className="lg:hidden flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md">
                 <span className="font-bold text-sm text-white">P3</span>
               </div>
