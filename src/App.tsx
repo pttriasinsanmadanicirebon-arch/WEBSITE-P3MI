@@ -61,9 +61,35 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import imageCompression from 'browser-image-compression';
 
 import { db, auth, storage } from './firebase';
 import { cn, formatCurrency } from './lib/utils';
+
+// --- Utils ---
+
+const compressImage = async (file: File) => {
+  const options = {
+    maxSizeMB: 0.5,
+    maxWidthOrHeight: 1280,
+    useWebWorker: true,
+  };
+  try {
+    return await imageCompression(file, options);
+  } catch (error) {
+    console.error('Compression error:', error);
+    return file;
+  }
+};
+
+const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Koneksi tidak stabil. Silakan coba lagi.')), timeoutMs)
+    ),
+  ]);
+};
 
 // --- Types ---
 
@@ -605,13 +631,14 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
     try {
       if (pdfFile) {
         const storageRef = ref(storage, `cpmi_docs/${Date.now()}_${pdfFile.name}`);
-        const snapshot = await uploadBytes(storageRef, pdfFile);
+        const snapshot = await withTimeout(uploadBytes(storageRef, pdfFile), 30000) as any;
         pdfUrl = await getDownloadURL(snapshot.ref);
       }
 
       if (photoFile) {
+        const compressed = await compressImage(photoFile);
         const photoRef = ref(storage, `cpmi_photos/${Date.now()}_${photoFile.name}`);
-        const snapshot = await uploadBytes(photoRef, photoFile);
+        const snapshot = await withTimeout(uploadBytes(photoRef, compressed), 30000) as any;
         photoUrl = await getDownloadURL(snapshot.ref);
       }
 
@@ -1312,9 +1339,14 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
                   <button 
                     type="submit" 
                     disabled={isUploading}
-                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-sm disabled:opacity-50"
+                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {isUploading ? 'Sedang Mengunggah...' : 'Simpan Data Biodata'}
+                    {isUploading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Sedang Mengunggah...</span>
+                      </>
+                    ) : 'Simpan Data Biodata'}
                   </button>
                 </div>
               </form>
@@ -1644,9 +1676,11 @@ const SponsorsPage = ({ sponsors }: { sponsors: Sponsor[] }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
     const formData = new FormData(e.currentTarget);
     const data = {
       name: formData.get('name') as string,
@@ -1668,6 +1702,8 @@ const SponsorsPage = ({ sponsors }: { sponsors: Sponsor[] }) => {
       setEditingSponsor(null);
     } catch (error) {
       handleFirestoreError(error, editingSponsor ? OperationType.UPDATE : OperationType.CREATE, 'sponsors');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1810,9 +1846,15 @@ const SponsorsPage = ({ sponsors }: { sponsors: Sponsor[] }) => {
                   </button>
                   <button 
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-600/20"
+                    disabled={loading}
+                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {editingSponsor ? 'Simpan Perubahan' : 'Tambah Sponsor'}
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : editingSponsor ? 'Simpan Perubahan' : 'Tambah Sponsor'}
                   </button>
                 </div>
               </form>
@@ -1831,6 +1873,7 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [type, setType] = useState<'income' | 'expense'>('income');
   const [filterCpmiId, setFilterCpmiId] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (editingTransaction) {
@@ -1845,6 +1888,7 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
     const formData = new FormData(e.currentTarget);
     const data = {
       type: type,
@@ -1869,6 +1913,8 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
       setEditingTransaction(null);
     } catch (error) {
       handleFirestoreError(error, editingTransaction ? OperationType.UPDATE : OperationType.CREATE, 'transactions');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -2161,12 +2207,19 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
                   </button>
                   <button 
                     type="submit"
+                    disabled={loading}
                     className={cn(
-                      "flex-1 px-4 py-3.5 text-white rounded-2xl font-bold transition-all shadow-lg active:scale-95 text-sm",
-                      type === 'income' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20" : "bg-red-600 hover:bg-red-700 shadow-red-600/20"
+                      "flex-1 px-4 py-3.5 text-white rounded-2xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center justify-center gap-2",
+                      type === 'income' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20" : "bg-red-600 hover:bg-red-700 shadow-red-600/20",
+                      loading && "opacity-50"
                     )}
                   >
-                    {editingTransaction ? 'Simpan Perubahan' : 'Tambah Transaksi'}
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : editingTransaction ? 'Simpan Perubahan' : 'Tambah Transaksi'}
                   </button>
                 </div>
               </form>
@@ -2367,6 +2420,7 @@ const ProfileModal = ({
 }) => {
   const [displayName, setDisplayName] = useState(userProfile?.displayName || user.displayName || '');
   const [photoURL, setPhotoURL] = useState(userProfile?.photoURL || user.photoURL || '');
+  const [logoURL, setLogoURL] = useState(userProfile?.logoURL || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -2374,24 +2428,29 @@ const ProfileModal = ({
     if (isOpen) {
       setDisplayName(userProfile?.displayName || user.displayName || '');
       setPhotoURL(userProfile?.photoURL || user.photoURL || '');
+      setLogoURL(userProfile?.logoURL || '');
     }
   }, [isOpen, userProfile, user]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'logo') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Ukuran file maksimal 5MB');
-      return;
-    }
-
+    setLoading(true);
     setError(null);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPhotoURL(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (type === 'photo') setPhotoURL(reader.result as string);
+        else setLogoURL(reader.result as string);
+      };
+      reader.readAsDataURL(compressed);
+    } catch (err) {
+      setError('Gagal memproses gambar.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -2400,15 +2459,16 @@ const ProfileModal = ({
     setError(null);
 
     try {
-      // Update Auth display name (this is safe)
+      // Update Auth display name
       await updateProfile(user, {
         displayName
       });
 
-      // Update Firestore profile (handles long base64 strings)
+      // Update Firestore profile
       await setDoc(doc(db, 'users', user.uid), {
         displayName,
         photoURL,
+        logoURL,
         updatedAt: Timestamp.now()
       }, { merge: true });
 
@@ -2446,19 +2506,38 @@ const ProfileModal = ({
             </div>
 
             <form onSubmit={handleSave} className="p-8 space-y-6">
-              <div className="flex flex-col items-center gap-4 mb-4">
-                <div className="relative group">
-                  <img 
-                    src={photoURL || `https://ui-avatars.com/api/?name=${displayName}`} 
-                    className="w-24 h-24 rounded-3xl object-cover border-4 border-white shadow-xl" 
-                    alt="Profile" 
-                  />
-                  <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <Plus className="text-white" size={24} />
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                  </label>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Foto Profil</p>
+                  <div className="relative group">
+                    <img 
+                      src={photoURL || `https://ui-avatars.com/api/?name=${displayName}`} 
+                      className="w-24 h-24 rounded-3xl object-cover border-4 border-white shadow-xl" 
+                      alt="Profile" 
+                    />
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <Plus className="text-white" size={24} />
+                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'photo')} />
+                    </label>
+                  </div>
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Klik foto untuk ganti (Maks 5MB)</p>
+
+                <div className="flex flex-col items-center gap-3">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Logo Instansi</p>
+                  <div className="relative group">
+                    <div className="w-24 h-24 rounded-3xl bg-indigo-600 flex items-center justify-center border-4 border-white shadow-xl overflow-hidden">
+                      {logoURL ? (
+                        <img src={logoURL} className="w-full h-full object-cover" alt="Logo" />
+                      ) : (
+                        <span className="text-white font-bold text-2xl">P3</span>
+                      )}
+                    </div>
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <Plus className="text-white" size={24} />
+                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
+                    </label>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -2532,11 +2611,11 @@ const LoginPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-md p-8 sm:p-12 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 text-center"
       >
-        <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-10 shadow-xl shadow-indigo-200">
+        <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-10 shadow-xl shadow-indigo-200 overflow-hidden">
           <span className="text-white font-bold text-3xl">P3</span>
         </div>
         
-        <h1 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">P3MI Digital</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">P3MI Digital App</h1>
         <p className="text-slate-500 mb-10 font-medium leading-relaxed">Sistem Manajemen Terintegrasi untuk Penyaluran Pekerja Migran Indonesia.</p>
         
         <button
@@ -2665,10 +2744,14 @@ export default function App() {
         <header className="h-20 bg-white border-b border-slate-200 px-6 sm:px-10 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-                <span className="font-bold text-sm text-white">P3</span>
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden">
+                {userProfile?.logoURL ? (
+                  <img src={userProfile.logoURL} className="w-full h-full object-cover" alt="Logo" />
+                ) : (
+                  <span className="font-bold text-sm text-white">P3</span>
+                )}
               </div>
-              <h1 className="font-bold text-lg tracking-tight text-slate-900 uppercase">P3MI</h1>
+              <h1 className="font-bold text-lg tracking-tight text-slate-900 uppercase">P3MI Digital</h1>
             </div>
           </div>
           
