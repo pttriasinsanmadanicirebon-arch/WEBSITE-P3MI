@@ -43,7 +43,7 @@ service cloud.firestore {
     // Fields:
     //   - name: string (required)
     //   - contactPerson: string (optional)
-    //   - phone: string (optional)
+    //   - whatsapp: string (optional)
     //   - createdAt: timestamp (required)
     //
     // Collection: transactions
@@ -109,7 +109,9 @@ service cloud.firestore {
 
     function isValidSponsor(data) {
       return hasRequiredFields(['name', 'createdAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 100;
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             (!('contactPerson' in data) || (data.contactPerson is string && data.contactPerson.size() < 100)) &&
+             (!('whatsapp' in data) || (data.whatsapp is string && data.whatsapp.size() < 50));
     }
 
     function isValidTransaction(data) {

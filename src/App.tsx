@@ -42,6 +42,7 @@ import {
   Edit2, 
   Trash2, 
   ChevronRight,
+  MessageCircle,
   AlertCircle,
   TrendingUp,
   TrendingDown,
@@ -51,7 +52,8 @@ import {
   Download,
   X,
   ChevronDown,
-  UserCheck
+  UserCheck,
+  BarChart3
 } from 'lucide-react';
 import { 
   ref, 
@@ -67,6 +69,18 @@ import { db, auth, storage } from './firebase';
 import { cn, formatCurrency } from './lib/utils';
 
 // --- Utils ---
+
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration. The client is offline.");
+    }
+    // Skip logging for other errors, as this is simply a connection test.
+  }
+}
+testConnection();
 
 const compressImage = async (file: File) => {
   const options = {
@@ -89,6 +103,24 @@ const withTimeout = (promise: Promise<any>, timeoutMs: number) => {
       setTimeout(() => reject(new Error('Koneksi tidak stabil. Silakan coba lagi.')), timeoutMs)
     ),
   ]);
+};
+
+// --- Page Transition Component ---
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ 
+        duration: 0.3,
+        ease: "easeOut"
+      }}
+      className="w-full"
+    >
+      {children}
+    </motion.div>
+  );
 };
 
 // --- Types ---
@@ -310,57 +342,57 @@ const BottomNav = () => {
               className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[60]"
             />
             <motion.div
-              initial={{ opacity: 0, y: 40, scale: 0.9, x: '-50%' }}
+              initial={{ opacity: 0, y: 20, scale: 0.95, x: '-50%' }}
               animate={{ opacity: 1, y: 0, scale: 1, x: '-50%' }}
-              exit={{ opacity: 0, y: 40, scale: 0.9, x: '-50%' }}
-              className="fixed bottom-32 left-1/2 z-[70] w-[90%] max-w-xs bg-white/90 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-4 flex flex-col gap-2"
+              exit={{ opacity: 0, y: 20, scale: 0.95, x: '-50%' }}
+              className="fixed bottom-32 left-1/2 z-[70] w-[90%] max-w-xs bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl p-4 flex flex-col gap-2"
             >
-              <div className="px-4 py-2 mb-2 border-b border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Menu Cepat</p>
+              <div className="px-4 py-2 mb-2 border-b border-white/5">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Menu Cepat</p>
               </div>
               <button 
                 onClick={() => { setIsQuickActionOpen(false); navigate('/cpmi'); }}
-                className="w-full bg-slate-50/50 text-slate-900 px-6 py-4 rounded-2xl font-bold flex items-center gap-4 hover:bg-indigo-50 transition-all active:scale-[0.98] border border-slate-100/50"
+                className="w-full bg-slate-800 text-white px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] flex items-center gap-4 hover:bg-slate-700 transition-all active:scale-[0.98] border border-white/5 shadow-sm group"
               >
-                <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:rotate-12 transition-transform">
                   <Users size={20} />
                 </div>
-                <span className="text-sm">Tambah CPMI</span>
+                <span>Tambah CPMI</span>
               </button>
               <button 
                 onClick={() => { setIsQuickActionOpen(false); navigate('/transactions'); }}
-                className="w-full bg-slate-50/50 text-slate-900 px-6 py-4 rounded-2xl font-bold flex items-center gap-4 hover:bg-indigo-50 transition-all active:scale-[0.98] border border-slate-100/50"
+                className="w-full bg-slate-800 text-white px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] flex items-center gap-4 hover:bg-slate-700 transition-all active:scale-[0.98] border border-white/5 shadow-sm group"
               >
-                <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-12 transition-transform">
                   <Wallet size={20} />
                 </div>
-                <span className="text-sm">Tambah Transaksi</span>
+                <span>Tambah Transaksi</span>
               </button>
               <button 
                 onClick={() => { setIsQuickActionOpen(false); navigate('/reports'); }}
-                className="w-full bg-slate-50/50 text-slate-900 px-6 py-4 rounded-2xl font-bold flex items-center gap-4 hover:bg-indigo-50 transition-all active:scale-[0.98] border border-slate-100/50"
+                className="w-full bg-slate-800 text-white px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] flex items-center gap-4 hover:bg-slate-700 transition-all active:scale-[0.98] border border-white/5 shadow-sm group"
               >
-                <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:rotate-12 transition-transform">
                   <FileText size={20} />
                 </div>
-                <span className="text-sm">Lihat Laporan</span>
+                <span>Lihat Laporan</span>
               </button>
-              <div className="h-px bg-slate-100 my-2 mx-4" />
+              <div className="h-px bg-white/5 my-2 mx-4" />
               <button 
                 onClick={handleLogout}
-                className="w-full bg-red-50/50 text-red-600 px-6 py-4 rounded-2xl font-bold flex items-center gap-4 hover:bg-red-100 transition-all active:scale-[0.98] border border-red-100/30"
+                className="w-full bg-red-500/10 text-red-400 px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] flex items-center gap-4 hover:bg-red-500/20 transition-all active:scale-[0.98] border border-red-500/20 group"
               >
-                <div className="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-red-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20 group-hover:rotate-12 transition-transform">
                   <LogOut size={20} />
                 </div>
-                <span className="text-sm">Keluar Sesi</span>
+                <span>Keluar Sesi</span>
               </button>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-lg h-20 bg-slate-900/95 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center justify-between px-2">
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-lg h-24 bg-slate-900/90 backdrop-blur-md rounded-[3.5rem] border border-white/10 shadow-2xl flex items-center justify-between px-4">
         <div className="flex items-center flex-1 justify-around">
           {leftItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -369,25 +401,25 @@ const BottomNav = () => {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "relative flex flex-col items-center justify-center w-16 h-16 transition-all duration-500 rounded-2xl",
+                  "relative flex flex-col items-center justify-center w-16 h-16 transition-all duration-700 rounded-[1.5rem]",
                   isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
                 )}
               >
                 {isActive && (
                   <motion.div 
                     layoutId="nav-pill"
-                    className="absolute inset-0 bg-white/10 rounded-2xl"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    className="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-[1.5rem] border border-white/10 shadow-inner"
+                    transition={{ type: 'spring', bounce: 0.3, duration: 0.8 }}
                   />
                 )}
-                <item.icon size={20} className={cn("z-10 transition-transform duration-300", isActive && "scale-110")} />
-                <span className={cn("text-[8px] font-black uppercase tracking-widest mt-1 z-10 transition-all", isActive ? "opacity-100" : "opacity-60")}>
+                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} className={cn("z-10 transition-all duration-700", isActive && "scale-110 drop-shadow-lg")} />
+                <span className={cn("text-[7px] font-black uppercase tracking-[0.25em] mt-2 z-10 transition-all duration-700", isActive ? "opacity-100 text-indigo-400" : "opacity-40")}>
                   {item.label}
                 </span>
                 {isActive && (
                   <motion.div 
                     layoutId="nav-dot"
-                    className="absolute -bottom-1 w-1 h-1 bg-indigo-400 rounded-full shadow-[0_0_8px_rgba(129,140,248,0.8)]"
+                    className="absolute -bottom-1.5 w-1.5 h-1.5 bg-indigo-400 rounded-full shadow-md"
                   />
                 )}
               </Link>
@@ -396,19 +428,20 @@ const BottomNav = () => {
         </div>
 
         {/* Floating Action Button */}
-        <div className="relative flex items-center justify-center w-20">
-          <div className="absolute -top-10">
+        <div className="relative flex items-center justify-center w-28">
+          <div className="absolute -top-14">
             <button
               onClick={() => setIsQuickActionOpen(!isQuickActionOpen)}
               className={cn(
-                "w-16 h-16 rounded-[2rem] bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white shadow-[0_10px_25px_rgba(99,102,241,0.4)] flex items-center justify-center transition-all duration-500 hover:scale-110 active:scale-90 border-[6px] border-slate-900 group",
+                "w-20 h-20 rounded-[2.5rem] bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 text-white shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 border-[8px] border-slate-950 group relative overflow-hidden",
                 isQuickActionOpen ? "rotate-[135deg] shadow-none" : "rotate-0"
               )}
             >
-              <Plus size={32} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Plus size={38} strokeWidth={3} className="group-hover:rotate-90 transition-transform duration-300 drop-shadow-lg" />
             </button>
             {/* Subtle Glow behind button */}
-            <div className="absolute inset-0 -z-10 bg-indigo-500/20 blur-2xl rounded-full animate-pulse" />
+            <div className="absolute inset-0 -z-10 bg-indigo-500/30 blur-[30px] rounded-full" />
           </div>
         </div>
 
@@ -420,25 +453,25 @@ const BottomNav = () => {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "relative flex flex-col items-center justify-center w-16 h-16 transition-all duration-500 rounded-2xl",
+                  "relative flex flex-col items-center justify-center w-16 h-16 transition-all duration-700 rounded-[1.5rem]",
                   isActive ? "text-white" : "text-slate-500 hover:text-slate-300"
                 )}
               >
                 {isActive && (
                   <motion.div 
                     layoutId="nav-pill"
-                    className="absolute inset-0 bg-white/10 rounded-2xl"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    className="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-[1.5rem] border border-white/10 shadow-inner"
+                    transition={{ type: 'spring', bounce: 0.3, duration: 0.8 }}
                   />
                 )}
-                <item.icon size={20} className={cn("z-10 transition-transform duration-300", isActive && "scale-110")} />
-                <span className={cn("text-[8px] font-black uppercase tracking-widest mt-1 z-10 transition-all", isActive ? "opacity-100" : "opacity-60")}>
+                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} className={cn("z-10 transition-all duration-700", isActive && "scale-110 drop-shadow-lg")} />
+                <span className={cn("text-[7px] font-black uppercase tracking-[0.25em] mt-2 z-10 transition-all duration-700", isActive ? "opacity-100 text-indigo-400" : "opacity-40")}>
                   {item.label}
                 </span>
                 {isActive && (
                   <motion.div 
                     layoutId="nav-dot"
-                    className="absolute -bottom-1 w-1 h-1 bg-indigo-400 rounded-full shadow-[0_0_8px_rgba(129,140,248,0.8)]"
+                    className="absolute -bottom-1.5 w-1.5 h-1.5 bg-indigo-400 rounded-full shadow-md"
                   />
                 )}
               </Link>
@@ -468,8 +501,8 @@ const Dashboard = ({ cpmi, sponsors, transactions }: { cpmi: CPMI[], sponsors: S
     <div className="space-y-8">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h2>
-          <p className="text-slate-500 text-sm">Ringkasan data operasional P3MI</p>
+          <h2 className="text-2xl font-black text-white tracking-tight">Dashboard Overview</h2>
+          <p className="text-slate-400 text-sm font-medium">Ringkasan data operasional P3MI</p>
         </div>
       </header>
 
@@ -477,54 +510,67 @@ const Dashboard = ({ cpmi, sponsors, transactions }: { cpmi: CPMI[], sponsors: S
         {stats.map((stat, idx) => (
           <motion.div
             key={idx}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="card-saas p-6"
+            transition={{ delay: idx * 0.05 }}
+            className="group relative bg-slate-900 rounded-[2rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/5 overflow-hidden hover:border-white/10"
           >
-            <div className="flex items-center justify-between mb-4">
+            {/* Decorative background gradient */}
+            <div className={cn(
+              "absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-700 blur-2xl",
+              stat.color === 'blue' ? "bg-blue-600" :
+              stat.color === 'purple' ? "bg-purple-600" :
+              stat.color === 'emerald' ? "bg-emerald-600" :
+              "bg-amber-600"
+            )} />
+            
+            <div className="flex items-center justify-between mb-8">
               <div className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center shadow-sm",
-                stat.color === 'blue' ? "bg-blue-50 text-blue-600 border border-blue-100" :
-                stat.color === 'purple' ? "bg-purple-50 text-purple-600 border border-purple-100" :
-                stat.color === 'emerald' ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
-                "bg-amber-50 text-amber-600 border border-amber-100"
+                "w-16 h-16 rounded-3xl flex items-center justify-center shadow-2xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6",
+                stat.color === 'blue' ? "bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-blue-500/10" :
+                stat.color === 'purple' ? "bg-purple-600/20 text-purple-400 border border-purple-500/20 shadow-purple-500/10" :
+                stat.color === 'emerald' ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/20 shadow-emerald-500/10" :
+                "bg-amber-600/20 text-amber-400 border-amber-500/20 shadow-amber-500/10"
               )}>
-                <stat.icon size={24} />
+                <stat.icon size={32} strokeWidth={2} />
               </div>
             </div>
-            <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">{stat.label}</p>
-            <h3 className="text-2xl font-bold text-slate-900">{stat.value}</h3>
+            <div>
+              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.25em] mb-2">{stat.label}</p>
+              <h3 className="text-3xl font-black text-white tracking-tight group-hover:translate-x-1 transition-transform duration-500">{stat.value}</h3>
+            </div>
           </motion.div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="card-saas p-8">
+        <div className="bg-slate-900 p-8 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-all duration-300">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="font-bold text-xl text-slate-900 tracking-tight flex items-center gap-3">
-              <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+            <h3 className="font-black text-2xl text-white tracking-tight flex items-center gap-4">
+              <div className="w-2.5 h-10 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full shadow-lg" />
               CPMI Terbaru
             </h3>
-            <Link to="/cpmi" className="text-blue-600 text-xs font-bold uppercase tracking-wider hover:text-blue-700 transition-colors">Lihat Semua</Link>
+            <Link to="/cpmi" className="group/link text-blue-400 text-[10px] font-black uppercase tracking-[0.3em] hover:text-blue-300 transition-all inline-flex items-center gap-3">
+              Lihat Semua <ChevronRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
+            </Link>
           </div>
           <div className="space-y-4">
             {cpmi.slice(0, 5).map((person) => (
-              <div key={person.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all duration-300 group">
+              <div key={person.id} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-white/5 hover:bg-slate-800/50 hover:shadow-lg transition-all duration-300 group cursor-pointer hover:border-white/10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-blue-600 font-bold text-lg shadow-sm overflow-hidden">
+                  <div className="w-14 h-14 bg-slate-900 border border-white/10 rounded-xl flex items-center justify-center text-blue-400 font-black text-xl shadow-md overflow-hidden group-hover:scale-105 transition-transform duration-300">
                     {person.photo ? (
                       <img src={person.photo} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                     ) : person.fullName.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{person.fullName}</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{person.country} • {person.registrationNumber}</p>
+                    <p className="font-black text-lg text-white group-hover:text-blue-400 transition-colors tracking-tight">{person.fullName}</p>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-1">{person.country} • {person.registrationNumber}</p>
                   </div>
                 </div>
                 <span className={cn(
-                  "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm",
-                  person.documentStatus === 'Lengkap' ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-amber-50 text-amber-600 border border-amber-100"
+                  "px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl border transition-all duration-500",
+                  person.documentStatus === 'Lengkap' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 group-hover:bg-emerald-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20 group-hover:bg-amber-500/20"
                 )}>
                   {person.documentStatus}
                 </span>
@@ -533,32 +579,34 @@ const Dashboard = ({ cpmi, sponsors, transactions }: { cpmi: CPMI[], sponsors: S
           </div>
         </div>
 
-        <div className="card-saas p-8">
+        <div className="bg-slate-900 p-8 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-all duration-300">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="font-bold text-xl text-slate-900 tracking-tight flex items-center gap-3">
-              <div className="w-1.5 h-6 bg-purple-600 rounded-full" />
+            <h3 className="font-black text-2xl text-white tracking-tight flex items-center gap-4">
+              <div className="w-2.5 h-10 bg-gradient-to-b from-purple-500 to-fuchsia-600 rounded-full shadow-lg" />
               Transaksi Terakhir
             </h3>
-            <Link to="/transactions" className="text-purple-600 text-xs font-bold uppercase tracking-wider hover:text-purple-700 transition-colors">Lihat Semua</Link>
+            <Link to="/transactions" className="group/link text-purple-400 text-[10px] font-black uppercase tracking-[0.3em] hover:text-purple-300 transition-all inline-flex items-center gap-3">
+              Lihat Semua <ChevronRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
+            </Link>
           </div>
           <div className="space-y-4">
             {transactions.slice(0, 5).map((t) => (
-              <div key={t.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all duration-300 group">
+              <div key={t.id} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-white/5 hover:bg-slate-800/50 hover:shadow-lg transition-all duration-300 group cursor-pointer hover:border-white/10">
                 <div className="flex items-center gap-4">
                   <div className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border",
-                    t.type === 'income' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-red-50 text-red-600 border-red-100"
+                    "w-14 h-14 rounded-xl flex items-center justify-center shadow-md transition-all duration-300 group-hover:scale-105",
+                    t.type === 'income' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" : "bg-red-500/20 text-red-400 border border-red-500/20"
                   )}>
-                    {t.type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                    {t.type === 'income' ? <TrendingUp size={28} strokeWidth={2} /> : <TrendingDown size={28} strokeWidth={2} />}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 group-hover:text-purple-600 transition-colors">{t.description}</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t.category} • {format(t.date.toDate(), 'dd MMM yyyy')}</p>
+                    <p className="font-black text-lg text-white group-hover:text-purple-400 transition-colors tracking-tight">{t.description}</p>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-1">{t.category} • {format(t.date.toDate(), 'dd MMM yyyy')}</p>
                   </div>
                 </div>
                 <p className={cn(
-                  "font-bold text-lg tracking-tight",
-                  t.type === 'income' ? "text-emerald-600" : "text-red-600"
+                  "font-black text-xl tracking-tight",
+                  t.type === 'income' ? "text-emerald-400" : "text-red-400"
                 )}>
                   {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
                 </p>
@@ -584,6 +632,7 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const filteredCPMI = useMemo(() => {
     return cpmi.filter(p => 
@@ -593,15 +642,17 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
     );
   }, [cpmi, search]);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2000000) { // 2MB limit for Storage is fine
-        alert('Ukuran foto terlalu besar. Maksimal 2MB.');
-        return;
+      try {
+        const compressed = await compressImage(file);
+        setPhotoFile(compressed as File);
+        setPhotoPreview(URL.createObjectURL(compressed));
+      } catch (error) {
+        console.error('Photo processing error:', error);
+        alert('Gagal memproses foto. Silakan coba lagi.');
       }
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -630,16 +681,19 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
 
     try {
       if (pdfFile) {
+        console.log('Uploading PDF...', pdfFile.name);
         const storageRef = ref(storage, `cpmi_docs/${Date.now()}_${pdfFile.name}`);
-        const snapshot = await withTimeout(uploadBytes(storageRef, pdfFile), 30000) as any;
+        const snapshot = await withTimeout(uploadBytes(storageRef, pdfFile), 60000) as any;
         pdfUrl = await getDownloadURL(snapshot.ref);
+        console.log('PDF uploaded successfully:', pdfUrl);
       }
 
       if (photoFile) {
-        const compressed = await compressImage(photoFile);
+        console.log('Uploading Photo...', photoFile.name);
         const photoRef = ref(storage, `cpmi_photos/${Date.now()}_${photoFile.name}`);
-        const snapshot = await withTimeout(uploadBytes(photoRef, compressed), 30000) as any;
+        const snapshot = await withTimeout(uploadBytes(photoRef, photoFile), 60000) as any;
         photoUrl = await getDownloadURL(snapshot.ref);
+        console.log('Photo uploaded successfully:', photoUrl);
       }
 
       const data = {
@@ -836,39 +890,42 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Data CPMI</h2>
-          <p className="text-sm font-medium text-slate-500">{currentCompany}</p>
+          <h2 className="text-3xl font-black text-white tracking-tight mb-1">Data CPMI</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-md" />
+            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">{currentCompany}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button 
             onClick={exportToCSV}
-            className="flex-1 sm:flex-none bg-white text-slate-700 border border-slate-200 px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 transition-all font-semibold text-sm shadow-sm"
+            className="flex-1 sm:flex-none bg-slate-900 text-slate-400 border border-white/5 px-6 py-3.5 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-800 hover:text-white hover:border-white/10 transition-all font-black uppercase tracking-widest text-[10px] shadow-lg group"
           >
-            <Download size={18} />
+            <Download size={18} className="group-hover:-translate-y-0.5 transition-transform" />
             <span>Ekspor CSV</span>
           </button>
           <button 
             onClick={() => { setEditingCPMI(null); setPhotoPreview(null); setPhotoFile(null); setPdfFile(null); setIsModalOpen(true); }}
-            className="flex-1 sm:flex-none bg-indigo-600 text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all font-semibold text-sm shadow-sm"
+            className="flex-1 sm:flex-none bg-indigo-600 text-white px-6 py-3.5 rounded-2xl flex items-center justify-center gap-3 hover:bg-indigo-500 transition-all font-black uppercase tracking-widest text-[10px] shadow-lg active:scale-95 group"
           >
-            <Plus size={18} />
+            <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
             <span>Tambah CPMI</span>
           </button>
         </div>
       </header>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+      <div className="bg-slate-900 rounded-[2rem] border border-white/5 shadow-xl overflow-hidden hover:border-white/10 transition-all duration-300">
+        <div className="p-6 border-b border-white/5 bg-slate-950/50">
+          <div className="relative max-w-xl group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
             <input 
               type="text" 
               placeholder="Cari nama, no registrasi, atau negara..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm text-slate-900 placeholder:text-slate-400 font-medium"
+              className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-white/5 rounded-xl focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all text-sm text-white placeholder:text-slate-500 font-medium"
             />
           </div>
         </div>
@@ -876,79 +933,79 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
         {/* Desktop Table */}
         <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-slate-50/50 text-slate-500 text-[11px] uppercase tracking-wider font-bold border-b border-slate-100">
+            <thead className="bg-slate-950/50 text-slate-500 text-[10px] uppercase tracking-[0.3em] font-black border-b border-white/5">
               <tr>
-                <th className="px-6 py-4">Nama Lengkap</th>
-                <th className="px-6 py-4">No. Registrasi</th>
-                <th className="px-6 py-4">Negara</th>
-                <th className="px-6 py-4">Sponsor</th>
-                <th className="px-6 py-4">Status Berkas</th>
-                <th className="px-6 py-4">Proses</th>
-                <th className="px-6 py-4 text-right">Aksi</th>
+                <th className="px-10 py-6">Nama Lengkap</th>
+                <th className="px-10 py-6">No. Registrasi</th>
+                <th className="px-10 py-6">Negara</th>
+                <th className="px-10 py-6">Sponsor</th>
+                <th className="px-10 py-6">Status Berkas</th>
+                <th className="px-10 py-6">Proses</th>
+                <th className="px-10 py-6 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-white/5">
               {filteredCPMI.map((person) => (
-                <tr key={person.id} className="hover:bg-slate-50/50 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
+                <tr key={person.id} className="hover:bg-white/[0.03] transition-all duration-500 group">
+                  <td className="px-10 py-6">
+                    <div className="flex items-center gap-5">
                       {person.photo ? (
-                        <img src={person.photo} className="w-10 h-10 rounded-lg object-cover border border-slate-200" alt="" referrerPolicy="no-referrer" />
+                        <img src={person.photo} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/5 shadow-2xl group-hover:scale-110 transition-transform duration-500" alt="" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-xs border border-indigo-100">
+                        <div className="w-14 h-14 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center font-black text-lg border border-indigo-500/20 shadow-inner group-hover:scale-110 transition-transform duration-500">
                           {person.fullName.charAt(0)}
                         </div>
                       )}
                       <div>
-                        <span className="font-bold text-slate-900 block text-sm">{person.fullName}</span>
-                        <span className="text-xs text-slate-500 font-medium">{person.phone || '-'}</span>
+                        <span className="font-black text-white block text-base tracking-tight group-hover:text-indigo-400 transition-colors">{person.fullName}</span>
+                        <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-0.5">{person.phone || '-'}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-500 font-mono text-xs">{person.registrationNumber}</td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded-md">{person.country}</span>
+                  <td className="px-10 py-6 text-slate-400 font-mono text-xs tracking-widest">{person.registrationNumber}</td>
+                  <td className="px-10 py-6">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 bg-slate-800/50 px-4 py-2 rounded-xl border border-white/5 shadow-inner">{person.country}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 font-medium">
+                  <td className="px-10 py-6 text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
                     {sponsors.find(s => s.id === person.sponsorId)?.name || 'Tidak Diketahui'}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-10 py-6">
                     <span className={cn(
-                      "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                      person.documentStatus === 'Lengkap' ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : 
-                      person.documentStatus === 'Proses' ? "bg-blue-50 text-blue-600 border border-blue-100" :
-                      "bg-amber-50 text-amber-600 border border-amber-100"
+                      "px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl border transition-all duration-500",
+                      person.documentStatus === 'Lengkap' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 group-hover:bg-emerald-500/20" : 
+                      person.documentStatus === 'Proses' ? "bg-blue-500/10 text-blue-400 border-blue-500/20 group-hover:bg-blue-500/20" :
+                      "bg-amber-500/10 text-amber-400 border-amber-500/20 group-hover:bg-amber-500/20"
                     )}>
                       {person.documentStatus}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-bold uppercase tracking-wider border border-indigo-100">
+                  <td className="px-10 py-6">
+                    <span className="px-4 py-2 bg-indigo-500/10 text-indigo-400 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-indigo-500/20 shadow-2xl group-hover:bg-indigo-500/20 transition-all duration-500">
                       {person.processStatus || 'Proses'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-1">
+                  <td className="px-10 py-6 text-right">
+                    <div className="flex items-center justify-end gap-3">
                       <button 
                         onClick={() => { setSelectedCPMI(person); setIsDetailOpen(true); }}
-                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                        className="p-3 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-2xl transition-all border border-transparent hover:border-indigo-500/20 shadow-sm active:scale-90"
                         title="Detail Biodata"
                       >
-                        <FileText size={18} />
+                        <FileText size={20} />
                       </button>
                       <button 
                         onClick={() => { setEditingCPMI(person); setPhotoPreview(person.photo || null); setPhotoFile(null); setPdfFile(null); setIsModalOpen(true); }}
-                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                        className="p-3 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-2xl transition-all border border-transparent hover:border-emerald-500/20 shadow-sm active:scale-90"
                         title="Edit"
                       >
-                        <Edit2 size={18} />
+                        <Edit2 size={20} />
                       </button>
                       <button 
                         onClick={() => { setDeleteId(person.id); setIsConfirmOpen(true); }}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        className="p-3 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all border border-transparent hover:border-red-500/20 shadow-sm active:scale-90"
                         title="Hapus"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={20} />
                       </button>
                     </div>
                   </td>
@@ -959,74 +1016,77 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
         </div>
 
         {/* Mobile Card Layout */}
-        <div className="lg:hidden divide-y divide-slate-100">
+        <div className="lg:hidden grid grid-cols-1 gap-4 p-4">
           {filteredCPMI.map((person) => (
-            <div key={person.id} className="p-5 space-y-4 hover:bg-slate-50/50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      {person.photo ? (
-                        <img src={person.photo} className="w-12 h-12 rounded-xl object-cover border border-slate-200" alt="" referrerPolicy="no-referrer" />
-                      ) : (
-                        <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-base border border-indigo-100">
-                          {person.fullName.charAt(0)}
-                        </div>
-                      )}
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-base leading-tight mb-1">{person.fullName}</h4>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{person.registrationNumber}</p>
-                      </div>
+            <motion.div 
+              key={person.id} 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-slate-900 p-6 rounded-[2rem] border border-white/5 shadow-lg hover:shadow-xl transition-all duration-300 space-y-4 relative overflow-hidden group hover:border-white/10"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-5">
+                  {person.photo ? (
+                    <img src={person.photo} className="w-18 h-18 rounded-2xl object-cover border-2 border-white/10 shadow-2xl group-hover:scale-110 transition-transform duration-700" alt="" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-18 h-18 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center font-black text-3xl shadow-2xl shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-700">
+                      {person.fullName.charAt(0)}
                     </div>
-                    <div className="flex flex-col items-end gap-1.5">
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
-                        person.documentStatus === 'Lengkap' ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : 
-                        person.documentStatus === 'Proses' ? "bg-blue-50 text-blue-600 border border-blue-100" :
-                        "bg-amber-50 text-amber-600 border border-amber-100"
-                      )}>
-                        {person.documentStatus}
-                      </span>
-                      <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full text-[9px] font-bold uppercase tracking-wider border border-indigo-100">
-                        {person.processStatus || 'Proses'}
-                      </span>
+                  )}
+                  <div>
+                    <h4 className="font-black text-white text-xl leading-tight mb-1 tracking-tight group-hover:text-indigo-400 transition-colors">{person.fullName}</h4>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{person.registrationNumber}</span>
+                      <span className="w-1 h-1 bg-slate-200 rounded-full" />
+                      <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{person.country}</span>
                     </div>
                   </div>
-              
-              <div className="grid grid-cols-2 gap-3 py-3 border-y border-slate-100">
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Negara</p>
-                  <p className="text-xs font-semibold text-slate-700">{person.country}</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Sponsor</p>
-                  <p className="text-xs font-semibold text-slate-700 truncate">
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <span className={cn(
+                  "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border",
+                  person.documentStatus === 'Lengkap' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
+                  person.documentStatus === 'Proses' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                  "bg-amber-50 text-amber-600 border-amber-100"
+                )}>
+                  {person.documentStatus}
+                </span>
+                <span className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border border-indigo-100">
+                  {person.processStatus || 'Proses'}
+                </span>
+              </div>
+
+              <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Sponsor</p>
+                  <p className="text-[11px] font-black text-slate-300 uppercase tracking-tight">
                     {sponsors.find(s => s.id === person.sponsorId)?.name || '-'}
                   </p>
                 </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => { setSelectedCPMI(person); setIsDetailOpen(true); }}
+                    className="p-2.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition-all active:scale-90 bg-slate-800 border border-white/5"
+                  >
+                    <FileText size={16} />
+                  </button>
+                  <button 
+                    onClick={() => { setEditingCPMI(person); setPhotoPreview(person.photo || null); setPhotoFile(null); setPdfFile(null); setIsModalOpen(true); }}
+                    className="p-2.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all active:scale-90 bg-slate-800 border border-white/5"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button 
+                    onClick={() => { setDeleteId(person.id); setIsConfirmOpen(true); }}
+                    className="p-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all active:scale-90 bg-slate-800 border border-white/5"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <button 
-                  onClick={() => { setSelectedCPMI(person); setIsDetailOpen(true); }}
-                  className="flex-1 bg-slate-50 text-indigo-600 py-2.5 rounded-lg flex items-center justify-center gap-2 font-bold uppercase text-[10px] tracking-wider hover:bg-indigo-50 transition-all border border-slate-200"
-                >
-                  <FileText size={14} />
-                  Detail
-                </button>
-                <button 
-                  onClick={() => { setEditingCPMI(person); setPhotoPreview(person.photo || null); setPhotoFile(null); setPdfFile(null); setIsModalOpen(true); }}
-                  className="flex-1 bg-slate-50 text-slate-600 py-2.5 rounded-lg flex items-center justify-center gap-2 font-bold uppercase text-[10px] tracking-wider hover:bg-slate-100 transition-all border border-slate-200"
-                >
-                  <Edit2 size={14} />
-                  Edit
-                </button>
-                <button 
-                  onClick={() => { setDeleteId(person.id); setIsConfirmOpen(true); }}
-                  className="w-10 bg-red-50 text-red-600 py-2.5 rounded-lg flex items-center justify-center hover:bg-red-100 transition-all border border-red-100"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -1051,71 +1111,101 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
               className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden my-4 sm:my-8 flex flex-col max-h-[90vh]"
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="relative bg-slate-900 w-full max-w-5xl rounded-[2rem] shadow-2xl overflow-hidden my-4 sm:my-8 flex flex-col max-h-[90vh] border border-white/10"
             >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight">
-                  {editingCPMI ? 'Edit Data CPMI' : 'Formulir Biodata CPMI'}
-                </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-full transition-all">
-                  <X size={24} />
+              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-slate-950/50 sticky top-0 z-10">
+                <div>
+                  <h3 className="text-2xl font-black text-white tracking-tight uppercase tracking-[0.1em]">
+                    {editingCPMI ? 'Edit Data CPMI' : 'Formulir Biodata CPMI'}
+                  </h3>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-1">Lengkapi seluruh informasi biodata calon pekerja migran.</p>
+                </div>
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white p-3 hover:bg-white/5 rounded-2xl transition-all active:scale-90">
+                  <X size={28} />
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-10 overflow-y-auto custom-scrollbar bg-white">
+              <form onSubmit={handleSubmit} className="p-8 sm:p-12 space-y-14 overflow-y-auto custom-scrollbar bg-slate-900/50">
                 {/* Section: Basic Info */}
-                <div className="space-y-6">
-                  <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
-                    <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                <div className="space-y-8">
+                  <h4 className="font-black text-indigo-400 uppercase tracking-[0.3em] text-[11px] flex items-center gap-3">
+                    <div className="w-2 h-6 bg-indigo-500 rounded-full shadow-md" />
                     Informasi Dasar
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:row-span-3 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50 group hover:border-indigo-300 transition-all cursor-pointer relative overflow-hidden">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    <div className="md:row-span-3 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-[3rem] p-10 bg-white/[0.02] group hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all cursor-pointer relative overflow-hidden shadow-inner">
                       {photoPreview ? (
-                        <div className="relative group/photo w-full aspect-[3/4]">
-                          <img src={photoPreview} className="w-full h-full object-cover rounded-xl shadow-md" alt="Preview" referrerPolicy="no-referrer" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
-                            <button 
-                              type="button" 
-                              onClick={() => setPhotoPreview(null)}
-                              className="bg-red-500 text-white p-2 rounded-lg shadow-lg active:scale-95"
-                            >
-                              <Trash2 size={20} />
-                            </button>
+                        <div className="relative group/photo w-48 h-48">
+                          <img src={photoPreview} className="w-full h-full object-cover rounded-[2.5rem] shadow-2xl ring-4 ring-slate-800 group-hover/photo:scale-105 transition-transform duration-700" alt="Preview" referrerPolicy="no-referrer" />
+                          <div className="absolute inset-0 bg-indigo-600/40 opacity-0 group-hover/photo:opacity-100 transition-all flex items-center justify-center rounded-[2.5rem] backdrop-blur-[2px]">
+                            <div className="flex flex-col gap-3">
+                              {editingCPMI && photoFile && (
+                                <button 
+                                  type="button" 
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    setIsUploading(true);
+                                    try {
+                                      const photoRef = ref(storage, `cpmi_photos/${Date.now()}_${photoFile.name}`);
+                                      const snapshot = await withTimeout(uploadBytes(photoRef, photoFile), 60000) as any;
+                                      const photoUrl = await getDownloadURL(snapshot.ref);
+                                      await updateDoc(doc(db, 'cpmi', editingCPMI.id), { photo: photoUrl, updatedAt: Timestamp.now() });
+                                      setPhotoFile(null);
+                                      alert('Foto berhasil disimpan!');
+                                    } catch (err) {
+                                      console.error(err);
+                                      alert('Gagal menyimpan foto.');
+                                    } finally {
+                                      setIsUploading(false);
+                                    }
+                                  }}
+                                  className="bg-emerald-500 text-white px-6 py-3 rounded-2xl shadow-2xl font-black text-[10px] uppercase tracking-widest active:scale-90 hover:bg-emerald-600 transition-all"
+                                >
+                                  Simpan Foto
+                                </button>
+                              )}
+                              <button 
+                                type="button" 
+                                onClick={() => { setPhotoPreview(null); setPhotoFile(null); }}
+                                className="bg-red-500 text-white p-4 rounded-2xl shadow-2xl active:scale-90 hover:bg-red-600 transition-all mx-auto"
+                              >
+                                <Trash2 size={24} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-6">
-                          <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                            <Plus size={24} />
+                        <div className="text-center">
+                          <div className="w-24 h-24 bg-slate-800/50 text-indigo-400 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-700 border border-white/5">
+                            <Plus size={40} />
                           </div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upload Foto CPMI</p>
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Foto Profil CPMI</p>
                         </div>
                       )}
                       <input type="file" accept="image/*" onChange={handlePhotoChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                     </div>
-                    <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div className="space-y-1.5">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Nama Lengkap</label>
-                        <input name="fullName" defaultValue={editingCPMI?.fullName} required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Nama Lengkap</label>
+                        <input name="fullName" defaultValue={editingCPMI?.fullName} required className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">No. Registrasi</label>
-                        <input name="registrationNumber" defaultValue={editingCPMI?.registrationNumber} required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-mono text-sm" />
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">No. Registrasi</label>
+                        <input name="registrationNumber" defaultValue={editingCPMI?.registrationNumber} required className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-mono text-sm shadow-inner tracking-widest" />
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">No. HP CPMI</label>
-                        <input name="phone" defaultValue={editingCPMI?.phone} required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">No. HP CPMI</label>
+                        <input name="phone" defaultValue={editingCPMI?.phone} required className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Tanggal Daftar</label>
-                        <input type="date" name="registrationDate" defaultValue={editingCPMI?.registrationDate || format(new Date(), 'yyyy-MM-dd')} required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Tanggal Daftar</label>
+                        <input type="date" name="registrationDate" defaultValue={editingCPMI?.registrationDate || format(new Date(), 'yyyy-MM-dd')} required className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Negara Tujuan</label>
-                        <select name="country" defaultValue={editingCPMI?.country} required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm">
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Negara Tujuan</label>
+                        <select name="country" defaultValue={editingCPMI?.country} required className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner appearance-none">
                           <option value="Taiwan">Taiwan</option>
                           <option value="Hong Kong">Hong Kong</option>
                           <option value="Singapura">Singapura</option>
@@ -1123,33 +1213,33 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
                           <option value="Jepang">Jepang</option>
                         </select>
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         <div className="flex items-center justify-between px-1">
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sponsor</label>
+                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Sponsor</label>
                           <button 
                             type="button"
                             onClick={() => { setIsModalOpen(false); navigate('/sponsors'); }}
-                            className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider hover:underline"
+                            className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] hover:text-indigo-300 transition-colors"
                           >
                             + Tambah
                           </button>
                         </div>
-                        <select name="sponsorId" defaultValue={editingCPMI?.sponsorId} required className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm">
+                        <select name="sponsorId" defaultValue={editingCPMI?.sponsorId} required className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner appearance-none">
                           {sponsors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                       </div>
-                      <div className="space-y-1.5 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Status Berkas</label>
-                          <select name="documentStatus" defaultValue={editingCPMI?.documentStatus || 'Proses'} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm">
+                      <div className="space-y-2 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Status Berkas</label>
+                          <select name="documentStatus" defaultValue={editingCPMI?.documentStatus || 'Proses'} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner appearance-none">
                             <option value="Proses">Proses</option>
                             <option value="Lengkap">Lengkap</option>
                             <option value="Kurang">Kurang</option>
                           </select>
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Update Proses CPMI</label>
-                          <select name="processStatus" defaultValue={editingCPMI?.processStatus || 'Proses'} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm">
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Update Proses CPMI</label>
+                          <select name="processStatus" defaultValue={editingCPMI?.processStatus || 'Proses'} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner appearance-none">
                             <option value="Proses">Proses</option>
                             <option value="Medical Checkup">Medical Checkup</option>
                             <option value="LPK">LPK</option>
@@ -1166,120 +1256,116 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
                 </div>
 
                 {/* Section: Personal Details */}
-                <div className="space-y-6">
-                  <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
-                    <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                <div className="space-y-8">
+                  <h4 className="font-black text-indigo-400 uppercase tracking-[0.3em] text-[11px] flex items-center gap-3">
+                    <div className="w-2 h-6 bg-indigo-500 rounded-full shadow-md" />
                     Data Pribadi
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div className="sm:col-span-2 space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Alamat</label>
-                      <input name="address" defaultValue={editingCPMI?.address} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Alamat</label>
+                      <input name="address" defaultValue={editingCPMI?.address} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Agama</label>
-                      <input name="religion" defaultValue={editingCPMI?.religion} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Agama</label>
+                      <input name="religion" defaultValue={editingCPMI?.religion} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Umur</label>
-                      <input type="number" name="age" defaultValue={editingCPMI?.age} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Umur</label>
+                      <input type="number" name="age" defaultValue={editingCPMI?.age} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Tempat Lahir</label>
-                      <input name="pob" defaultValue={editingCPMI?.pob} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Tempat Lahir</label>
+                      <input name="pob" defaultValue={editingCPMI?.pob} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Tanggal Lahir</label>
-                      <input type="date" name="dob" defaultValue={editingCPMI?.dob} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Tanggal Lahir</label>
+                      <input type="date" name="dob" defaultValue={editingCPMI?.dob} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Tinggi (cm)</label>
-                      <input type="number" name="height" defaultValue={editingCPMI?.height} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Tinggi (cm)</label>
+                      <input type="number" name="height" defaultValue={editingCPMI?.height} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Berat (kg)</label>
-                      <input type="number" name="weight" defaultValue={editingCPMI?.weight} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Berat (kg)</label>
+                      <input type="number" name="weight" defaultValue={editingCPMI?.weight} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
                   </div>
                 </div>
 
                 {/* Section: Family */}
-                <div className="space-y-6">
-                  <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
-                    <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                <div className="space-y-8">
+                  <h4 className="font-black text-indigo-400 uppercase tracking-[0.3em] text-[11px] flex items-center gap-3">
+                    <div className="w-2 h-6 bg-indigo-500 rounded-full shadow-md" />
                     Data Keluarga
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Nama Bapak</label>
-                      <input name="fatherName" defaultValue={editingCPMI?.fatherName} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Nama Bapak</label>
+                      <input name="fatherName" defaultValue={editingCPMI?.fatherName} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Nama Ibu</label>
-                      <input name="motherName" defaultValue={editingCPMI?.motherName} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Nama Ibu</label>
+                      <input name="motherName" defaultValue={editingCPMI?.motherName} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Nama Suami/Istri</label>
-                      <input name="spouseName" defaultValue={editingCPMI?.spouseName} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Nama Suami/Istri</label>
+                      <input name="spouseName" defaultValue={editingCPMI?.spouseName} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Pekerjaan</label>
-                      <input name="occupation" defaultValue={editingCPMI?.occupation} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Pekerjaan</label>
+                      <input name="occupation" defaultValue={editingCPMI?.occupation} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Jumlah Saudara</label>
-                      <input type="number" name="siblingsCount" defaultValue={editingCPMI?.siblingsCount} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Jumlah Saudara</label>
+                      <input type="number" name="siblingsCount" defaultValue={editingCPMI?.siblingsCount} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Anak ke Berapa</label>
-                      <input type="number" name="birthOrder" defaultValue={editingCPMI?.birthOrder} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Anak ke Berapa</label>
+                      <input type="number" name="birthOrder" defaultValue={editingCPMI?.birthOrder} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Pendidikan Terakhir</label>
-                      <input name="education" defaultValue={editingCPMI?.education} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Pendidikan Terakhir</label>
+                      <input name="education" defaultValue={editingCPMI?.education} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner" />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Status Pernikahan</label>
-                      <select name="maritalStatus" defaultValue={editingCPMI?.maritalStatus} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm">
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Status Pernikahan</label>
+                      <select name="maritalStatus" defaultValue={editingCPMI?.maritalStatus} className="w-full px-5 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none text-white font-black text-sm shadow-inner appearance-none">
                         <option value="Single">Single</option>
                         <option value="Menikah">Menikah</option>
                         <option value="Cerai Hidup">Cerai Hidup</option>
                         <option value="Cerai Mati">Cerai Mati</option>
                       </select>
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Jumlah Anak</label>
-                      <input type="number" name="childrenCount" defaultValue={editingCPMI?.childrenCount} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700 font-semibold text-sm" />
-                    </div>
                   </div>
                 </div>
 
                 {/* Section: Skills & Docs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-6">
-                    <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
-                      <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-8">
+                    <h4 className="font-black text-indigo-400 uppercase tracking-[0.3em] text-[11px] flex items-center gap-3">
+                      <div className="w-2 h-6 bg-indigo-500 rounded-full shadow-md" />
                       Kemampuan Bahasa
                     </h4>
-                    <div className="grid grid-cols-1 gap-2.5">
+                    <div className="grid grid-cols-1 gap-3">
                       {['mandarin', 'english', 'cantonese'].map(lang => (
-                        <label key={lang} className="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-all border border-slate-100 group">
-                          <input type="checkbox" name={`lang_${lang}`} defaultChecked={(editingCPMI?.languages as any)?.[lang]} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 bg-white border-slate-200" />
-                          <span className="capitalize font-semibold text-slate-700 text-sm">{lang}</span>
+                        <label key={lang} className="flex items-center gap-4 p-5 bg-slate-800/50 rounded-2xl cursor-pointer hover:bg-slate-800 transition-all border border-white/5 group active:scale-[0.98]">
+                          <input type="checkbox" name={`lang_${lang}`} defaultChecked={(editingCPMI?.languages as any)?.[lang]} className="w-6 h-6 rounded-lg text-indigo-500 focus:ring-indigo-500 bg-slate-950 border-white/10" />
+                          <span className="capitalize font-black text-slate-300 text-sm tracking-widest group-hover:text-white transition-colors">{lang}</span>
                         </label>
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-6">
-                    <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
-                      <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                  <div className="space-y-8">
+                    <h4 className="font-black text-indigo-400 uppercase tracking-[0.3em] text-[11px] flex items-center gap-3">
+                      <div className="w-2 h-6 bg-indigo-500 rounded-full shadow-md" />
                       Kelengkapan Dokumen
                     </h4>
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-2 gap-3">
                       {['ktp', 'kk', 'aktaLahir', 'bukuNikah', 'suratIjin', 'ijasah', 'aktaCerai', 'paspor'].map(doc => (
-                        <label key={doc} className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-all border border-slate-100 group">
-                          <input type="checkbox" name={`doc_${doc}`} defaultChecked={(editingCPMI?.documents as any)?.[doc]} className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 bg-white border-slate-200" />
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-700">{doc}</span>
+                        <label key={doc} className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-2xl cursor-pointer hover:bg-slate-800 transition-all border border-white/5 group active:scale-[0.98]">
+                          <input type="checkbox" name={`doc_${doc}`} defaultChecked={(editingCPMI?.documents as any)?.[doc]} className="w-5 h-5 rounded-lg text-indigo-500 focus:ring-indigo-500 bg-slate-950 border-white/10" />
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] group-hover:text-slate-300 transition-colors">{doc}</span>
                         </label>
                       ))}
                     </div>
@@ -1287,17 +1373,17 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
                 </div>
 
                 {/* Section: Experience & Terms */}
-                <div className="space-y-6">
-                  <h4 className="font-bold text-indigo-600 uppercase tracking-wider text-xs flex items-center gap-2">
-                    <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+                <div className="space-y-8">
+                  <h4 className="font-black text-indigo-400 uppercase tracking-[0.3em] text-[11px] flex items-center gap-3">
+                    <div className="w-2 h-6 bg-indigo-500 rounded-full shadow-md" />
                     Pengalaman Kerja & T&C
                   </h4>
-                  <div className="space-y-6">
-                    <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Input Pengalaman Kerja</label>
-                      <textarea name="workExperience" defaultValue={editingCPMI?.workExperience} rows={3} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-700 font-medium text-sm" />
+                  <div className="space-y-8">
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Input Pengalaman Kerja</label>
+                      <textarea name="workExperience" defaultValue={editingCPMI?.workExperience} rows={4} className="w-full px-6 py-5 bg-slate-800/50 border border-white/5 rounded-[2rem] focus:ring-2 focus:ring-indigo-500/50 outline-none resize-none text-white font-black text-sm shadow-inner placeholder:text-slate-600" placeholder="Ceritakan pengalaman kerja anda..." />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {[
                         { id: 'familyConsent', label: 'Apakah anda mendapat restu dari keluarga?' },
                         { id: 'contractCompletion', label: 'Sanggupkah anda bekerja selama kontrak SELESAI?' },
@@ -1305,48 +1391,63 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
                         { id: 'holidayWork', label: 'Sanggupkah anda bekerja pada hari minggu dan hari libur?' },
                         { id: 'eatPork', label: 'Bolehkah anda makan daging babi?' },
                         { id: 'handlePork', label: 'Apakah anda bisa memegang dan memotong daging babi?' },
-                      ].map(term => (
-                        <label key={term.id} className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-all border border-slate-100 group">
-                          <input type="checkbox" name={`term_${term.id}`} defaultChecked={(editingCPMI?.terms as any)?.[term.id]} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 bg-white border-slate-200" />
-                          <span className="text-xs font-semibold text-slate-600 leading-snug group-hover:text-slate-900">{term.label}</span>
+                        { id: 'dogCare', label: 'Bolehkah anda memelihara anjing?' },
+                        { id: 'elderlyCare', label: 'Bolehkah anda merawat orang tua/jompo?' },
+                        { id: 'disabledCare', label: 'Bolehkah anda merawat orang cacat?' },
+                        { id: 'babyCare', label: 'Bolehkah anda merawat bayi?' },
+                        { id: 'childCare', label: 'Bolehkah anda merawat anak kecil?' },
+                        { id: 'cooking', label: 'Bolehkah anda memasak?' },
+                        { id: 'cleaning', label: 'Bolehkah anda membersihkan rumah?' },
+                        { id: 'washing', label: 'Bolehkah anda mencuci baju?' },
+                        { id: 'ironing', label: 'Bolehkah anda menyetrika?' },
+                        { id: 'carWash', label: 'Bolehkah anda mencuci mobil?' },
+                        { id: 'noPhoneWork', label: 'Bolehkah anda tidak memegang HP saat bekerja?' }
+                      ].map(item => (
+                        <label key={item.id} className="flex items-center gap-4 p-5 bg-slate-800/50 rounded-2xl cursor-pointer hover:bg-slate-800 transition-all border border-white/5 group active:scale-[0.98]">
+                          <input type="checkbox" name={`term_${item.id}`} defaultChecked={(editingCPMI?.terms as any)?.[item.id]} className="w-6 h-6 rounded-lg text-indigo-500 focus:ring-indigo-500 bg-slate-950 border-white/10" />
+                          <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-relaxed group-hover:text-slate-200 transition-colors">{item.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Note / Keterangan Tambahan</label>
-                  <textarea name="notes" defaultValue={editingCPMI?.notes} rows={3} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-slate-700 font-medium text-sm" />
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Note / Keterangan Tambahan</label>
+                  <textarea name="notes" defaultValue={editingCPMI?.notes} rows={4} className="w-full px-6 py-5 bg-slate-800/50 border border-white/5 rounded-[2rem] focus:ring-2 focus:ring-indigo-500/50 outline-none resize-none text-white font-black text-sm shadow-inner placeholder:text-slate-600" placeholder="Catatan tambahan..." />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">Upload Berkas PDF</label>
-                  <div className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold text-slate-700">{pdfFile ? pdfFile.name : editingCPMI?.pdfUrl ? 'Berkas PDF sudah ada' : 'Belum ada berkas PDF'}</p>
-                      <p className="text-[10px] text-slate-500 font-medium">Format: PDF (Maks. 5MB)</p>
+                <div className="space-y-4">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Upload Berkas PDF</label>
+                  <div className="flex items-center gap-6 p-6 bg-slate-800/50 border border-white/5 rounded-[2rem] shadow-inner">
+                    <div className="w-16 h-16 bg-slate-950 rounded-2xl flex items-center justify-center text-indigo-500 border border-white/5">
+                      <FileText size={32} />
                     </div>
-                    <label className="bg-white text-indigo-600 border border-indigo-200 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer hover:bg-indigo-50 transition-all">
+                    <div className="flex-1">
+                      <p className="text-sm font-black text-slate-200 tracking-widest uppercase">{pdfFile ? pdfFile.name : editingCPMI?.pdfUrl ? 'Berkas PDF sudah ada' : 'Belum ada berkas PDF'}</p>
+                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-1">Format: PDF (Maks. 5MB)</p>
+                    </div>
+                    <label className="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-indigo-500 transition-all shadow-lg active:scale-95">
                       Pilih File
                       <input type="file" accept="application/pdf" onChange={handlePdfChange} className="hidden" />
                     </label>
                   </div>
                 </div>
 
-                <div className="pt-6 flex flex-col sm:flex-row gap-3 sticky bottom-0 bg-white pb-4">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all">Batal</button>
+                <div className="flex gap-6 pt-10 border-t border-white/5 sticky bottom-0 bg-slate-900 pb-4">
                   <button 
-                    type="submit" 
-                    disabled={isUploading}
-                    className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                    type="button" 
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 px-10 py-5 bg-white/5 border border-white/10 text-slate-400 rounded-[2rem] font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all active:scale-95"
                   >
-                    {isUploading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Sedang Mengunggah...</span>
-                      </>
-                    ) : 'Simpan Data Biodata'}
+                    Batal
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={isUploading}
+                    className="flex-[2] px-10 py-5 bg-indigo-600 text-white rounded-[2rem] font-black uppercase tracking-widest text-xs hover:bg-indigo-500 transition-all shadow-lg disabled:opacity-50 active:scale-95 flex items-center justify-center gap-4"
+                  >
+                    {isUploading ? <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" /> : (editingCPMI ? 'Perbarui Data CPMI' : 'Simpan Data CPMI')}
                   </button>
                 </div>
               </form>
@@ -1359,33 +1460,33 @@ const CPMIPage = ({ cpmi, sponsors, transactions, currentCompany }: { cpmi: CPMI
       <AnimatePresence>
         {isDetailOpen && selectedCPMI && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDetailOpen(false)} className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden my-4 sm:my-8 flex flex-col max-h-[90vh]">
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10 modal-header">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsDetailOpen(false)} className="fixed inset-0 bg-black/80 backdrop-blur-md" />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-slate-900 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden my-4 sm:my-8 flex flex-col max-h-[90vh] border border-white/10">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-slate-900 sticky top-0 z-10 modal-header">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
+                  <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 border border-indigo-500/20">
                     <FileText size={24} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">{selectedCPMI.fullName}</h3>
-                    <p className="text-xs font-semibold text-slate-500 mt-0.5">{selectedCPMI.registrationNumber} • {selectedCPMI.company}</p>
+                    <h3 className="text-xl font-black text-white tracking-tight leading-tight">{selectedCPMI.fullName}</h3>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-0.5">{selectedCPMI.registrationNumber} • {selectedCPMI.company}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => window.print()}
-                    className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                    className="p-2.5 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all"
                     title="Cetak Biodata"
                   >
                     <Printer size={20} />
                   </button>
-                  <button onClick={() => setIsDetailOpen(false)} className="text-slate-400 hover:text-slate-600 p-2.5 hover:bg-slate-50 rounded-full transition-all">
+                  <button onClick={() => setIsDetailOpen(false)} className="text-slate-500 hover:text-white p-2.5 hover:bg-white/5 rounded-full transition-all">
                     <X size={24} />
                   </button>
                 </div>
               </div>
               
-              <div id="printable-biodata" className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-10 custom-scrollbar bg-white">
+              <div id="printable-biodata" className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-10 custom-scrollbar bg-slate-900">
                 <style dangerouslySetInnerHTML={{ __html: `
                   @media print {
                     @page { size: A4; margin: 1.5cm; }
@@ -1719,16 +1820,19 @@ const SponsorsPage = ({ sponsors }: { sponsors: Sponsor[] }) => {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Data Sponsor</h2>
-          <p className="text-slate-500">Kelola daftar sponsor dan agen penyalur.</p>
+          <h2 className="text-3xl font-black text-white tracking-tight mb-1">Data Sponsor</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse shadow-md" />
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Kelola daftar sponsor dan agen penyalur.</p>
+          </div>
         </div>
         <button 
           onClick={() => { setEditingSponsor(null); setIsModalOpen(true); }}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700 transition-colors shadow-lg shadow-purple-600/20"
+          className="bg-purple-600 text-white px-6 py-3.5 rounded-2xl flex items-center gap-3 hover:bg-purple-500 transition-all font-black uppercase tracking-widest text-[10px] shadow-lg active:scale-95 group"
         >
-          <Plus size={20} />
+          <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
           <span>Tambah Sponsor</span>
         </button>
       </header>
@@ -1737,41 +1841,51 @@ const SponsorsPage = ({ sponsors }: { sponsors: Sponsor[] }) => {
         {sponsors.map((sponsor) => (
           <motion.div
             key={sponsor.id}
-            layout
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="card-saas p-6 group relative"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="group bg-slate-900 p-6 rounded-[2rem] border border-white/5 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden hover:border-white/10"
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-50 text-purple-600 border border-purple-100 rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+            <div className="flex items-start justify-between mb-6">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-2xl shadow-md group-hover:scale-105 transition-all duration-300 border-2 border-slate-800">
                 {sponsor.name.charAt(0)}
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-2">
                 <button 
                   onClick={() => { setEditingSponsor(sponsor); setIsModalOpen(true); }}
-                  className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-2.5 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition-all border border-transparent hover:border-indigo-500/20 shadow-sm active:scale-90"
                   title="Edit"
                 >
-                  <Edit2 size={16} />
+                  <Edit2 size={18} />
                 </button>
                 <button 
                   onClick={() => { setDeleteId(sponsor.id); setIsConfirmOpen(true); }}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-500/20 shadow-sm active:scale-90"
                   title="Hapus"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={18} />
                 </button>
               </div>
             </div>
-            <h3 className="font-bold text-lg text-slate-900">{sponsor.name}</h3>
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <Users size={14} className="text-slate-400" />
-                <span>{sponsor.contactPerson || '-'}</span>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-black text-white tracking-tight leading-tight group-hover:text-purple-400 transition-colors">{sponsor.name}</h3>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-1">Sponsor Agency</p>
               </div>
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <Wallet size={14} className="text-slate-400" />
-                <span>{sponsor.whatsapp || '-'}</span>
+              
+              <div className="space-y-2 pt-4 border-t border-white/5">
+                <div className="flex items-center gap-3 text-slate-400 group/item">
+                  <div className="w-8 h-8 bg-slate-800/50 rounded-lg flex items-center justify-center text-slate-500 group-hover/item:bg-indigo-500/10 group-hover/item:text-indigo-400 transition-all">
+                    <Users size={14} />
+                  </div>
+                  <span className="text-sm font-bold tracking-tight">{sponsor.contactPerson || '-'}</span>
+                </div>
+                <div className="flex items-center gap-3 text-slate-400 group/item">
+                  <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 group-hover/item:bg-emerald-500/20 transition-all">
+                    <MessageCircle size={14} />
+                  </div>
+                  <span className="text-sm font-bold tracking-tight">{sponsor.whatsapp || '-'}</span>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -1797,64 +1911,62 @@ const SponsorsPage = ({ sponsors }: { sponsors: Sponsor[] }) => {
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="relative bg-slate-900 border border-white/10 w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-900">
-                  {editingSponsor ? 'Edit Sponsor' : 'Tambah Sponsor Baru'}
+              <div className="p-10 border-b border-white/5 flex items-center justify-between bg-slate-950/50">
+                <h3 className="text-2xl font-black text-white tracking-tight uppercase tracking-[0.1em]">
+                  {editingSponsor ? 'Edit Sponsor' : 'Tambah Sponsor'}
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white p-3 hover:bg-white/5 rounded-2xl transition-all active:scale-90">
                   <X size={24} />
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Nama Sponsor</label>
+              <form onSubmit={handleSubmit} className="p-10 space-y-8 bg-slate-900/50">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Nama Sponsor</label>
                   <input 
                     name="name" 
                     defaultValue={editingSponsor?.name}
                     required 
-                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-purple-500/50 outline-none font-black text-white transition-all text-sm shadow-inner placeholder:text-slate-600"
+                    placeholder="Masukkan nama sponsor"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Kontak Person</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Kontak Person</label>
                   <input 
                     name="contactPerson" 
                     defaultValue={editingSponsor?.contactPerson}
-                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-purple-500/50 outline-none font-black text-white transition-all text-sm shadow-inner placeholder:text-slate-600"
+                    placeholder="Nama penanggung jawab"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">No. WhatsApp</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">No. WhatsApp</label>
                   <input 
                     name="whatsapp" 
                     defaultValue={editingSponsor?.whatsapp}
-                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                    className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-purple-500/50 outline-none font-black text-white transition-all text-sm shadow-inner placeholder:text-slate-600"
+                    placeholder="Contoh: 08123456789"
                   />
                 </div>
-                <div className="pt-4 flex gap-3">
+                <div className="flex gap-4 pt-4">
                   <button 
                     type="button" 
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="flex-1 px-8 py-4 bg-white/5 border border-white/10 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all active:scale-95"
                   >
                     Batal
                   </button>
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-lg shadow-purple-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-[2] px-8 py-4 bg-purple-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-purple-500 transition-all shadow-lg disabled:opacity-50 active:scale-95 flex items-center justify-center gap-3"
                   >
-                    {loading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Menyimpan...</span>
-                      </>
-                    ) : editingSponsor ? 'Simpan Perubahan' : 'Tambah Sponsor'}
+                    {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : (editingSponsor ? 'Simpan Perubahan' : 'Tambah Sponsor')}
                   </button>
                 </div>
               </form>
@@ -1930,87 +2042,90 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Keuangan</h2>
-          <p className="text-slate-500 text-sm">Catat pemasukan dan pengeluaran operasional secara digital.</p>
+          <h2 className="text-3xl font-black text-white tracking-tight mb-1">Manajemen Keuangan</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-md" />
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Catat pemasukan dan pengeluaran operasional secara digital.</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex items-center gap-4">
+          <div className="relative group">
             <select 
               value={filterCpmiId}
               onChange={(e) => setFilterCpmiId(e.target.value)}
-              className="bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 appearance-none pr-10 min-w-[200px]"
+              className="bg-slate-900 border border-white/5 px-6 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none pr-12 min-w-[220px] shadow-lg hover:bg-slate-800 transition-all cursor-pointer"
             >
               <option value="">Semua CPMI</option>
               {cpmi.map(p => (
                 <option key={p.id} value={p.id}>{p.fullName}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-hover:text-indigo-400 transition-colors" size={18} />
           </div>
           <button 
             onClick={() => { setEditingTransaction(null); setType('income'); setIsModalOpen(true); }}
-            className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-emerald-700 transition-all duration-300 shadow-lg shadow-emerald-600/20 font-bold"
+            className="bg-emerald-600 text-white px-6 py-3.5 rounded-2xl flex items-center gap-3 hover:bg-emerald-500 transition-all duration-500 shadow-lg font-black uppercase tracking-widest text-[10px] active:scale-95 group"
           >
-            <Plus size={20} />
+            <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
             <span>Tambah Transaksi</span>
           </button>
         </div>
       </header>
 
-      <div className="card-saas overflow-hidden">
+      <div className="bg-slate-900 rounded-[2rem] border border-white/5 shadow-xl overflow-hidden hover:border-white/10 transition-all duration-300">
         {/* Desktop View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="px-6 py-4 text-slate-500 text-[10px] font-bold uppercase tracking-wider">Tanggal</th>
-                <th className="px-6 py-4 text-slate-500 text-[10px] font-bold uppercase tracking-wider">Deskripsi</th>
-                <th className="px-6 py-4 text-slate-500 text-[10px] font-bold uppercase tracking-wider">Kategori</th>
-                <th className="px-6 py-4 text-slate-500 text-[10px] font-bold uppercase tracking-wider">CPMI Terkait</th>
-                <th className="px-6 py-4 text-slate-500 text-[10px] font-bold uppercase tracking-wider text-right">Jumlah</th>
-                <th className="px-6 py-4 text-slate-500 text-[10px] font-bold uppercase tracking-wider text-right">Aksi</th>
+              <tr className="bg-slate-950/50 border-b border-white/5">
+                <th className="px-10 py-6 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Tanggal</th>
+                <th className="px-10 py-6 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Deskripsi</th>
+                <th className="px-10 py-6 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">Kategori</th>
+                <th className="px-10 py-6 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">CPMI Terkait</th>
+                <th className="px-10 py-6 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] text-right">Jumlah</th>
+                <th className="px-10 py-6 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-white/5">
               {filteredTransactions.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50/50 transition-all duration-300 group">
-                  <td className="px-6 py-4 text-slate-600 text-sm font-medium">
+                <tr key={t.id} className="hover:bg-white/[0.03] transition-all duration-500 group">
+                  <td className="px-10 py-6 text-slate-400 font-mono text-xs tracking-widest">
                     {format(t.date.toDate(), 'dd/MM/yyyy')}
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{t.description}</p>
+                  <td className="px-10 py-6">
+                    <p className="font-black text-white group-hover:text-indigo-400 transition-colors tracking-tight text-base">{t.description}</p>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold uppercase tracking-wider border border-slate-200">
+                  <td className="px-10 py-6">
+                    <span className="px-4 py-2 bg-slate-800/50 text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/5 shadow-inner">
                       {t.category}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-slate-500 text-sm font-medium">
+                  <td className="px-10 py-6 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
                     {cpmi.find(p => p.id === t.cpmiId)?.fullName || '-'}
                   </td>
                   <td className={cn(
-                    "px-6 py-4 text-right font-bold text-lg tracking-tight",
-                    t.type === 'income' ? "text-emerald-600" : "text-red-600"
+                    "px-10 py-6 text-right font-black text-xl tracking-tight",
+                    t.type === 'income' ? "text-emerald-400" : "text-red-400"
                   )}>
                     {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-10 py-6 text-right">
+                    <div className="flex items-center justify-end gap-3">
                       <button 
                         onClick={() => { setEditingTransaction(t); setIsModalOpen(true); }}
-                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-300"
+                        className="p-3 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-2xl transition-all border border-transparent hover:border-indigo-500/20 shadow-sm active:scale-90"
                         title="Edit"
                       >
-                        <Edit2 size={18} />
+                        <Edit2 size={20} />
                       </button>
                       <button 
                         onClick={() => { setDeleteId(t.id); setIsConfirmOpen(true); }}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                        className="p-3 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all border border-transparent hover:border-red-500/20 shadow-sm active:scale-90"
                         title="Hapus"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={20} />
                       </button>
                     </div>
                   </td>
@@ -2021,46 +2136,60 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
         </div>
 
         {/* Mobile View */}
-        <div className="md:hidden p-4 space-y-4">
+        <div className="md:hidden grid grid-cols-1 gap-4 p-4">
           {filteredTransactions.map((t) => (
-            <div key={t.id} className="bg-slate-50 rounded-2xl border border-slate-100 p-5 space-y-4">
+            <motion.div 
+              key={t.id} 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-slate-900 p-6 rounded-[2rem] border border-white/5 shadow-lg hover:shadow-xl transition-all duration-300 space-y-4 relative overflow-hidden group hover:border-white/10"
+            >
               <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{format(t.date.toDate(), 'dd MMM yyyy')}</p>
-                  <p className="font-bold text-slate-900 uppercase tracking-tight">{t.description}</p>
+                <div className="flex items-center gap-5">
+                  <div className={cn(
+                    "w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6",
+                    t.type === 'income' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" : "bg-red-500/20 text-red-400 border border-red-500/20"
+                  )}>
+                    {t.type === 'income' ? <TrendingUp size={28} strokeWidth={2} /> : <TrendingDown size={28} strokeWidth={2} />}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-1">{format(t.date.toDate(), 'dd MMM yyyy')}</p>
+                    <p className="font-black text-white uppercase tracking-tight leading-tight text-lg group-hover:text-indigo-400 transition-colors">{t.description}</p>
+                  </div>
                 </div>
                 <div className={cn(
-                  "font-bold text-lg tracking-tight",
-                  t.type === 'income' ? "text-emerald-600" : "text-red-600"
+                  "font-black text-xl tracking-tight",
+                  t.type === 'income' ? "text-emerald-400" : "text-red-400"
                 )}>
                   {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
                 </div>
               </div>
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-                <div className="flex flex-col gap-1">
-                  <span className="px-2 py-0.5 bg-white text-slate-600 rounded-full text-[8px] font-bold uppercase tracking-widest border border-slate-200 w-fit">
+              
+              <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                <div className="flex flex-col gap-1.5">
+                  <span className="px-3 py-1 bg-slate-800/50 text-slate-400 rounded-xl text-[8px] font-black uppercase tracking-widest border border-white/5 w-fit">
                     {t.category}
                   </span>
-                  <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">
-                    CPMI: {cpmi.find(p => p.id === t.cpmiId)?.fullName || '-'}
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                    CPMI: <span className="text-slate-300">{cpmi.find(p => p.id === t.cpmiId)?.fullName.split(' ')[0] || '-'}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={() => { setEditingTransaction(t); setIsModalOpen(true); }}
-                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition-all active:scale-90 bg-slate-800 border border-white/5"
                   >
                     <Edit2 size={16} />
                   </button>
                   <button 
                     onClick={() => { setDeleteId(t.id); setIsConfirmOpen(true); }}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all active:scale-90 bg-slate-800 border border-white/5"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -2088,31 +2217,31 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
               className="absolute inset-0 bg-slate-900/80 backdrop-blur-md"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden border border-slate-100"
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              className="relative bg-slate-900 border border-white/10 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden"
             >
-              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="p-10 border-b border-white/5 flex items-center justify-between bg-slate-950/50">
                 <div>
-                  <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
-                    {editingTransaction ? 'Edit Transaksi' : 'Tambah Transaksi Baru'}
+                  <h3 className="text-2xl font-black text-white tracking-tight uppercase tracking-[0.1em]">
+                    {editingTransaction ? 'Edit Transaksi' : 'Tambah Transaksi'}
                   </h3>
-                  <p className="text-slate-500 text-xs font-medium mt-1">Lengkapi detail transaksi keuangan di bawah ini.</p>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2 opacity-60">Lengkapi detail transaksi keuangan di bawah ini.</p>
                 </div>
-                <button onClick={() => setIsModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white p-3 hover:bg-white/5 rounded-2xl transition-all active:scale-90">
                   <X size={24} />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                <div className="flex p-1 bg-slate-100 rounded-2xl">
+              <form onSubmit={handleSubmit} className="p-10 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar bg-slate-900/50">
+                <div className="flex p-1.5 bg-slate-950 rounded-[1.5rem] border border-white/5 shadow-inner">
                   <button
                     type="button"
                     onClick={() => setType('income')}
                     className={cn(
-                      "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300",
-                      type === 'income' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                      "flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500",
+                      type === 'income' ? "bg-emerald-600 text-white shadow-md" : "text-slate-500 hover:text-slate-300"
                     )}
                   >
                     Pemasukan
@@ -2121,87 +2250,93 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
                     type="button"
                     onClick={() => setType('expense')}
                     className={cn(
-                      "flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300",
-                      type === 'expense' ? "bg-white text-red-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                      "flex-1 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500",
+                      type === 'expense' ? "bg-red-600 text-white shadow-md" : "text-slate-500 hover:text-slate-300"
                     )}
                   >
                     Pengeluaran
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-700 ml-1">Jumlah (Rp)</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Jumlah (Rp)</label>
                     <input 
                       name="amount" 
                       type="number" 
                       defaultValue={editingTransaction?.amount}
                       required 
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-slate-400 text-sm"
+                      className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none font-black text-white transition-all text-sm shadow-inner placeholder:text-slate-600"
                       placeholder="0"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-slate-700 ml-1">Tanggal</label>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Tanggal</label>
                     <input 
                       name="date" 
                       type="date" 
                       defaultValue={editingTransaction ? format(editingTransaction.date.toDate(), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')}
                       required 
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                      className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none font-black text-white transition-all text-sm shadow-inner"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 ml-1">Kategori</label>
-                  <select 
-                    name="category" 
-                    defaultValue={editingTransaction?.category}
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none text-sm"
-                  >
-                    <option value="Biaya MD">Biaya MD</option>
-                    <option value="Fee Sponsor">Fee Sponsor</option>
-                    <option value="ID Paspor">ID Paspor</option>
-                    <option value="Living Cost">Living Cost</option>
-                    <option value="Mcu Pra">Mcu Pra</option>
-                    <option value="Royalti">Royalti</option>
-                    <option value="Transport">Transport</option>
-                    <option value="Keterangan Lain">Keterangan Lain</option>
-                    <option value="Lainnya">Lainnya</option>
-                  </select>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Kategori</label>
+                  <div className="relative group">
+                    <select 
+                      name="category" 
+                      defaultValue={editingTransaction?.category}
+                      className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none font-black text-white transition-all appearance-none text-sm shadow-inner cursor-pointer"
+                    >
+                      <option value="Biaya MD">Biaya MD</option>
+                      <option value="Fee Sponsor">Fee Sponsor</option>
+                      <option value="ID Paspor">ID Paspor</option>
+                      <option value="Living Cost">Living Cost</option>
+                      <option value="Mcu Pra">Mcu Pra</option>
+                      <option value="Royalti">Royalti</option>
+                      <option value="Transport">Transport</option>
+                      <option value="Keterangan Lain">Keterangan Lain</option>
+                      <option value="Lainnya">Lainnya</option>
+                    </select>
+                    <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-hover:text-indigo-400 transition-colors" size={18} />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 ml-1">Keterangan</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Keterangan</label>
                   <input 
                     name="description" 
                     defaultValue={editingTransaction?.description}
                     required 
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-slate-400 text-sm"
+                    className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none font-black text-white transition-all text-sm shadow-inner placeholder:text-slate-600"
                     placeholder="Contoh: Pembayaran Paspor"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700 ml-1">CPMI Terkait (Opsional)</label>
-                  <select 
-                    name="cpmiId" 
-                    defaultValue={editingTransaction?.cpmiId || ''}
-                    className="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all appearance-none text-sm"
-                  >
-                    <option value="">Tidak Ada</option>
-                    {cpmi.map(p => (
-                      <option key={p.id} value={p.id}>{p.fullName}</option>
-                    ))}
-                  </select>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">CPMI Terkait (Opsional)</label>
+                  <div className="relative group">
+                    <select 
+                      name="cpmiId" 
+                      defaultValue={editingTransaction?.cpmiId || ''}
+                      className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none font-black text-white transition-all appearance-none text-sm shadow-inner cursor-pointer"
+                    >
+                      <option value="">Tidak Ada</option>
+                      {cpmi.map(p => (
+                        <option key={p.id} value={p.id}>{p.fullName}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-hover:text-indigo-400 transition-colors" size={18} />
+                  </div>
                 </div>
 
-                <div className="pt-4 flex gap-4">
+                <div className="pt-6 flex gap-4">
                   <button 
                     type="button" 
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-3.5 border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all active:scale-95 text-sm"
+                    className="flex-1 px-8 py-4 bg-white/5 border border-white/10 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all active:scale-95"
                   >
                     Batal
                   </button>
@@ -2209,17 +2344,12 @@ const TransactionsPage = ({ transactions, cpmi }: { transactions: Transaction[],
                     type="submit"
                     disabled={loading}
                     className={cn(
-                      "flex-1 px-4 py-3.5 text-white rounded-2xl font-bold transition-all shadow-lg active:scale-95 text-sm flex items-center justify-center gap-2",
-                      type === 'income' ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20" : "bg-red-600 hover:bg-red-700 shadow-red-600/20",
+                      "flex-[2] px-8 py-4 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3",
+                      type === 'income' ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30" : "bg-red-600 hover:bg-red-500 shadow-red-600/30",
                       loading && "opacity-50"
                     )}
                   >
-                    {loading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Menyimpan...</span>
-                      </>
-                    ) : editingTransaction ? 'Simpan Perubahan' : 'Tambah Transaksi'}
+                    {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : (editingTransaction ? 'Simpan Perubahan' : 'Tambah Transaksi')}
                   </button>
                 </div>
               </form>
@@ -2272,66 +2402,69 @@ const ReportsPage = ({ transactions }: { transactions: Transaction[] }) => {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Laporan Keuangan</h2>
-          <p className="text-slate-500 text-sm font-medium">Analisis performa keuangan operasional Anda secara digital.</p>
+          <h2 className="text-3xl font-black text-white tracking-tight mb-1">Laporan Keuangan</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-md" />
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Analisis performa keuangan dan operasional perusahaan.</p>
+          </div>
         </div>
         <button 
           onClick={exportToCSV}
-          className="bg-white text-slate-700 px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-slate-50 transition-all duration-300 border border-slate-200 font-bold shadow-sm"
+          className="bg-slate-800 text-white px-6 py-3.5 rounded-2xl flex items-center gap-3 hover:bg-slate-700 transition-all duration-300 border border-white/10 font-black uppercase tracking-widest text-[10px] shadow-lg active:scale-95 group"
         >
-          <Download size={20} />
+          <Download size={20} className="group-hover:translate-y-0.5 transition-transform" />
           <span>Ekspor CSV</span>
         </button>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="card-saas p-6">
-          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2">Total Pemasukan</p>
-          <p className="text-2xl font-bold text-emerald-600 tracking-tight">{formatCurrency(reportData.income)}</p>
+        <div className="bg-slate-900 p-8 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-all duration-300 group">
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3 group-hover:text-emerald-400 transition-colors">Total Pemasukan</p>
+          <p className="text-3xl font-black text-emerald-400 tracking-tight">{formatCurrency(reportData.income)}</p>
         </div>
-        <div className="card-saas p-6">
-          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2">Total Pengeluaran</p>
-          <p className="text-2xl font-bold text-red-600 tracking-tight">{formatCurrency(reportData.expense)}</p>
+        <div className="bg-slate-900 p-8 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-all duration-300 group">
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3 group-hover:text-red-400 transition-colors">Total Pengeluaran</p>
+          <p className="text-3xl font-black text-red-400 tracking-tight">{formatCurrency(reportData.expense)}</p>
         </div>
-        <div className="card-saas p-6">
-          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2">Saldo Saat Ini</p>
-          <p className="text-2xl font-bold text-blue-600 tracking-tight">{formatCurrency(reportData.balance)}</p>
+        <div className="bg-slate-900 p-8 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-all duration-300 group">
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-3 group-hover:text-indigo-400 transition-colors">Saldo Saat Ini</p>
+          <p className="text-3xl font-black text-indigo-400 tracking-tight">{formatCurrency(reportData.balance)}</p>
         </div>
-        <div className="bg-indigo-600 p-6 rounded-2xl shadow-lg shadow-indigo-600/20">
-          <p className="text-indigo-100 text-[10px] font-bold uppercase tracking-wider mb-2">Grand Total (Laba/Rugi)</p>
-          <p className="text-2xl font-bold text-white tracking-tight">{formatCurrency(reportData.balance)}</p>
+        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-[2rem] shadow-lg border border-white/10 group hover:scale-[1.02] transition-all duration-300">
+          <p className="text-indigo-100/60 text-[10px] font-black uppercase tracking-[0.2em] mb-3">Grand Total (Laba/Rugi)</p>
+          <p className="text-3xl font-black text-white tracking-tight">{formatCurrency(reportData.balance)}</p>
         </div>
       </div>
 
-      <div className="card-saas p-8">
-        <h3 className="font-bold text-xl text-slate-900 tracking-tight mb-8 flex items-center gap-3">
-          <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+      <div className="bg-slate-900 p-10 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-all duration-300">
+        <h3 className="font-black text-2xl text-white tracking-tight mb-10 flex items-center gap-4">
+          <div className="w-2 h-8 bg-indigo-500 rounded-full shadow-md" />
           Ringkasan per Kategori
         </h3>
-        <div className="space-y-8">
+        <div className="space-y-10">
           {Object.entries(reportData.byCategory).map(([cat, amount]) => {
             const val = amount as number;
             const percentage = Math.abs(val) / (reportData.income + reportData.expense) * 100 || 0;
             return (
               <div key={cat} className="group">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-bold text-slate-700 uppercase tracking-wider text-xs group-hover:text-indigo-600 transition-colors">{cat}</span>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-black text-slate-400 uppercase tracking-[0.2em] text-[11px] group-hover:text-indigo-400 transition-colors">{cat}</span>
                   <span className={cn(
-                    "font-bold tracking-tight",
-                    val >= 0 ? "text-emerald-600" : "text-red-600"
+                    "font-black tracking-tight text-lg",
+                    val >= 0 ? "text-emerald-400" : "text-red-400"
                   )}>
                     {val >= 0 ? '+' : ''}{formatCurrency(val)}
                   </span>
                 </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner">
+                <div className="h-3 bg-slate-950 rounded-full overflow-hidden border border-white/5 shadow-inner p-0.5">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min(percentage, 100)}%` }}
                     className={cn(
-                      "h-full rounded-full transition-all duration-1000",
-                      val >= 0 ? "bg-emerald-500" : "bg-red-500"
+                      "h-full rounded-full transition-all duration-1000 shadow-lg",
+                      val >= 0 ? "bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-emerald-500/20" : "bg-gradient-to-r from-red-600 to-red-400 shadow-red-500/20"
                     )}
                   />
                 </div>
@@ -2339,7 +2472,12 @@ const ReportsPage = ({ transactions }: { transactions: Transaction[] }) => {
             );
           })}
           {Object.keys(reportData.byCategory).length === 0 && (
-            <div className="p-12 text-center text-slate-500 font-bold uppercase tracking-widest">Belum ada data kategori.</div>
+            <div className="py-20 text-center">
+              <div className="w-20 h-20 bg-slate-800/50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-slate-600 border border-white/5">
+                <BarChart3 size={40} />
+              </div>
+              <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-xs">Belum ada data kategori.</p>
+            </div>
           )}
         </div>
       </div>
@@ -2376,26 +2514,26 @@ const ConfirmModal = ({
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white border border-slate-100 w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden p-10 text-center"
+            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+            className="relative bg-slate-900 border border-white/10 w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden p-12 text-center"
           >
-            <div className="w-20 h-20 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-red-100 shadow-sm">
-              <Trash2 size={40} />
+            <div className="w-24 h-24 bg-red-500/10 text-red-500 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-red-500/20 shadow-2xl group">
+              <Trash2 size={48} className="group-hover:scale-110 transition-transform duration-500" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Hapus Data</h3>
-            <p className="text-slate-500 mb-10 leading-relaxed font-medium text-sm">{message}</p>
+            <h3 className="text-3xl font-black text-white mb-3 tracking-tight uppercase tracking-[0.1em]">Hapus Data</h3>
+            <p className="text-slate-400 mb-10 leading-relaxed font-bold text-sm uppercase tracking-[0.15em]">{message}</p>
             <div className="flex gap-4">
               <button 
                 onClick={onClose}
-                className="flex-1 px-6 py-3.5 border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all active:scale-95 text-sm"
+                className="flex-1 px-8 py-4 bg-white/5 border border-white/10 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all active:scale-95"
               >
                 Batal
               </button>
               <button 
                 onClick={() => { onConfirm(); onClose(); }}
-                className="flex-1 px-6 py-3.5 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-600/20 active:scale-95 text-sm"
+                className="flex-1 px-8 py-4 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-500 transition-all shadow-lg active:scale-95"
               >
                 Hapus
               </button>
@@ -2493,68 +2631,68 @@ const ProfileModal = ({
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white border border-slate-100 w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden"
+            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+            className="relative bg-slate-900 border border-white/10 w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden"
           >
-            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Edit Profil</h3>
-              <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-50 rounded-full transition-all">
+            <div className="p-10 border-b border-white/5 flex items-center justify-between bg-slate-950/50">
+              <h3 className="text-2xl font-black text-white tracking-tight uppercase tracking-[0.1em]">Edit Profil</h3>
+              <button onClick={onClose} className="text-slate-500 hover:text-white p-3 hover:bg-white/5 rounded-2xl transition-all active:scale-90">
                 <X size={24} />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="flex flex-col items-center gap-3">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Foto Profil</p>
+            <form onSubmit={handleSave} className="p-10 space-y-8 bg-slate-900/50">
+              <div className="grid grid-cols-2 gap-8">
+                <div className="flex flex-col items-center gap-4">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Foto Profil</p>
                   <div className="relative group">
                     <img 
                       src={photoURL || `https://ui-avatars.com/api/?name=${displayName}`} 
-                      className="w-24 h-24 rounded-3xl object-cover border-4 border-white shadow-xl" 
+                      className="w-28 h-28 rounded-[2rem] object-cover border-4 border-slate-800 shadow-2xl group-hover:scale-105 transition-transform duration-500" 
                       alt="Profile" 
                     />
-                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                      <Plus className="text-white" size={24} />
+                    <label className="absolute inset-0 flex items-center justify-center bg-indigo-600/40 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-all cursor-pointer backdrop-blur-[2px]">
+                      <Plus className="text-white drop-shadow-lg" size={32} />
                       <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'photo')} />
                     </label>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-3">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Logo Instansi</p>
+                <div className="flex flex-col items-center gap-4">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Logo Instansi</p>
                   <div className="relative group">
-                    <div className="w-24 h-24 rounded-3xl bg-indigo-600 flex items-center justify-center border-4 border-white shadow-xl overflow-hidden">
+                    <div className="w-28 h-28 rounded-[2rem] bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center border-4 border-slate-800 shadow-2xl overflow-hidden group-hover:scale-105 transition-transform duration-500">
                       {logoURL ? (
                         <img src={logoURL} className="w-full h-full object-cover" alt="Logo" />
                       ) : (
-                        <span className="text-white font-bold text-2xl">P3</span>
+                        <span className="text-white font-black text-3xl drop-shadow-lg">P3</span>
                       )}
                     </div>
-                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                      <Plus className="text-white" size={24} />
+                    <label className="absolute inset-0 flex items-center justify-center bg-purple-600/40 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-all cursor-pointer backdrop-blur-[2px]">
+                      <Plus className="text-white drop-shadow-lg" size={32} />
                       <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Nama Lengkap</label>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Nama Lengkap</label>
                 <input 
                   type="text" 
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 transition-all"
+                  className="w-full px-6 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 outline-none font-black text-white transition-all text-sm shadow-inner placeholder:text-slate-600"
                   placeholder="Masukkan nama lengkap"
                 />
               </div>
 
               {error && (
-                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-medium">
-                  <AlertCircle size={18} />
+                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-4 text-red-500 text-[10px] font-black uppercase tracking-widest shadow-lg">
+                  <AlertCircle size={20} />
                   {error}
                 </div>
               )}
@@ -2563,16 +2701,16 @@ const ProfileModal = ({
                 <button 
                   type="button" 
                   onClick={onClose}
-                  className="flex-1 px-6 py-3.5 border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all text-sm"
+                  className="flex-1 px-8 py-4 bg-white/5 border border-white/10 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all active:scale-95"
                 >
                   Batal
                 </button>
                 <button 
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                  className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-indigo-500 transition-all shadow-lg disabled:opacity-50 active:scale-95 flex items-center justify-center gap-3"
                 >
-                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Simpan'}
+                  {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Simpan Perubahan'}
                 </button>
               </div>
             </form>
@@ -2599,51 +2737,54 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
       {/* Background Decoration */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-indigo-500/5 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-blue-500/5 rounded-full blur-[150px]" />
+        <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-indigo-500/10 rounded-full blur-[150px]" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-blue-500/10 rounded-full blur-[150px]" />
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-md p-8 sm:p-12 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 text-center"
+        initial={{ opacity: 0, scale: 0.9, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative z-10 w-full max-w-md p-12 sm:p-16 bg-slate-900/90 backdrop-blur-md rounded-[3rem] shadow-2xl border border-white/10 text-center group"
       >
-        <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-10 shadow-xl shadow-indigo-200 overflow-hidden">
-          <span className="text-white font-bold text-3xl">P3</span>
+        <div className="w-28 h-28 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-12 shadow-lg overflow-hidden border-4 border-slate-900 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+          <span className="text-white font-black text-5xl drop-shadow-2xl">P3</span>
         </div>
         
-        <h1 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">P3MI Digital App</h1>
-        <p className="text-slate-500 mb-10 font-medium leading-relaxed">Sistem Manajemen Terintegrasi untuk Penyaluran Pekerja Migran Indonesia.</p>
+        <h1 className="text-5xl font-black text-white mb-4 tracking-tight leading-none">P3MI Digital</h1>
+        <p className="text-indigo-400 font-black text-[11px] uppercase tracking-[0.4em] mb-8">Management Ecosystem</p>
+        <p className="text-slate-400 mb-14 font-bold leading-relaxed text-sm px-6 uppercase tracking-widest opacity-60">Sistem Manajemen Terintegrasi untuk Penyaluran Pekerja Migran Indonesia.</p>
         
         <button
           onClick={handleLogin}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 bg-slate-900 text-white py-4 px-6 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg disabled:opacity-50 active:scale-95 group"
+          className="w-full bg-white text-slate-900 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-4 hover:bg-indigo-50 transition-all duration-500 shadow-2xl active:scale-95 disabled:opacity-50 group/btn"
         >
           {loading ? (
-            <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-3 border-slate-900 border-t-transparent rounded-full animate-spin" />
           ) : (
             <>
-              <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="" />
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/button/google.svg" className="w-6 h-6 group-hover/btn:scale-110 transition-transform" alt="Google" />
               <span>Masuk dengan Google</span>
             </>
           )}
         </button>
-        
-        <div className="mt-10 pt-10 border-t border-slate-100 flex items-center justify-center gap-8">
+
+        <div className="mt-14 pt-10 border-t border-white/5 flex items-center justify-center gap-10">
           <div className="text-center">
-            <p className="text-slate-900 font-bold text-lg">100%</p>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Secure</p>
+            <p className="text-white font-black text-xl leading-none mb-1">100%</p>
+            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Secure</p>
           </div>
-          <div className="w-[1px] h-6 bg-slate-200" />
+          <div className="w-[1px] h-8 bg-white/5" />
           <div className="text-center">
-            <p className="text-slate-900 font-bold text-lg">Real-time</p>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Sync</p>
+            <p className="text-white font-black text-xl leading-none mb-1">Cloud</p>
+            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest">Sync</p>
           </div>
         </div>
+
+        <p className="mt-12 text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Version 2.0.0 Hybrid Edition</p>
       </motion.div>
     </div>
   );
@@ -2652,6 +2793,7 @@ const LoginPage = () => {
 // --- Main App ---
 
 export default function App() {
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -2717,14 +2859,14 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <motion.div 
             animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-            className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full shadow-sm"
+            className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full shadow-md"
           />
-          <p className="text-sm font-semibold text-slate-500 animate-pulse">Memuat aplikasi...</p>
+          <p className="text-sm font-black text-slate-400 animate-pulse uppercase tracking-[0.2em]">Memuat aplikasi...</p>
         </div>
       </div>
     );
@@ -2736,54 +2878,58 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <Router>
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <BottomNav />
-      
-      <main className="flex-1 min-h-screen flex flex-col pb-32">
-        <header className="h-20 bg-white border-b border-slate-200 px-6 sm:px-10 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md overflow-hidden">
+      <div className="min-h-screen bg-slate-950 flex flex-col text-slate-100 selection:bg-indigo-500/30">
+        <BottomNav />
+        
+        <main className="flex-1 min-h-screen flex flex-col pb-32">
+          <header className="h-24 bg-slate-900/90 backdrop-blur-md border-b border-white/5 px-6 sm:px-12 flex items-center justify-between sticky top-0 z-30 shadow-lg">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-md overflow-hidden border border-white/10 group hover:scale-110 transition-transform duration-500">
                 {userProfile?.logoURL ? (
                   <img src={userProfile.logoURL} className="w-full h-full object-cover" alt="Logo" />
                 ) : (
-                  <span className="font-bold text-sm text-white">P3</span>
+                  <span className="font-black text-xl text-white drop-shadow-lg">P3</span>
                 )}
               </div>
-              <h1 className="font-bold text-lg tracking-tight text-slate-900 uppercase">P3MI Digital</h1>
+              <div className="hidden sm:block">
+                <h1 className="font-black text-lg tracking-tight text-white uppercase leading-none mb-1">P3MI Digital</h1>
+                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] leading-none opacity-80">Management Ecosystem</p>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-4 sm:gap-6 ml-auto">
+          <div className="flex items-center gap-6 sm:gap-10 ml-auto">
             <div className="hidden md:block relative group">
               <select 
                 value={currentCompany}
                 onChange={(e) => setCurrentCompany(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer hover:bg-slate-100 appearance-none pr-10"
+                className="bg-slate-800/30 border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 px-6 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer hover:bg-slate-800/50 appearance-none pr-14 shadow-2xl"
               >
                 <option value="PT Trias Insan Madani Cirebon">PT Trias Insan Madani Cirebon</option>
                 <option value="PT HARCOSELARAS SENTOSAJAYA">PT HARCOSELARAS SENTOSAJAYA</option>
               </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-slate-600 transition-colors">
-                <ChevronDown size={14} />
+              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-indigo-400 transition-colors">
+                <ChevronDown size={16} />
               </div>
             </div>
             
-            <div className="text-right hidden sm:block border-l border-slate-200 pl-6">
-              <p className="text-sm font-bold text-slate-900 leading-none mb-1">{userProfile?.displayName || user.displayName}</p>
-              <p className="text-[11px] text-slate-500 font-medium">{user.email}</p>
+            <div className="text-right hidden sm:block border-l border-white/10 pl-10">
+              <p className="text-sm font-black text-white leading-none mb-1.5 tracking-tight">{userProfile?.displayName || user.displayName}</p>
+              <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.25em] opacity-60">{user.email?.split('@')[0]}</p>
             </div>
             <button 
               onClick={() => setIsProfileOpen(true)}
-              className="relative group transition-transform active:scale-95"
+              className="relative group transition-transform active:scale-90"
             >
-              <img 
-                src={userProfile?.photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.displayName || user.displayName}`} 
-                className="w-10 h-10 rounded-xl border border-slate-200 shadow-sm object-cover group-hover:ring-2 group-hover:ring-indigo-500 transition-all" 
-                alt="Avatar" 
-              />
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
+              <div className="w-12 h-12 rounded-[1.2rem] p-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl shadow-indigo-500/20 group-hover:rotate-6 transition-all duration-700">
+                <img 
+                  src={userProfile?.photoURL || user.photoURL || `https://ui-avatars.com/api/?name=${userProfile?.displayName || user.displayName}`} 
+                  className="w-full h-full rounded-[1rem] border-2 border-slate-900 object-cover" 
+                  alt="Avatar" 
+                />
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full shadow-lg" />
             </button>
           </div>
         </header>
@@ -2795,36 +2941,38 @@ export default function App() {
           userProfile={userProfile}
         />
 
-        <div className="p-6 sm:p-10 max-w-7xl mx-auto w-full flex-1">
-          <div className="md:hidden mb-8">
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">Pilih Perusahaan</label>
+        <div className="p-6 sm:p-12 max-w-7xl mx-auto w-full flex-1">
+          <div className="md:hidden mb-10">
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-3 px-1 opacity-60">Pilih Perusahaan</label>
             <div className="relative group">
               <select 
                 value={currentCompany}
                 onChange={(e) => setCurrentCompany(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-sm font-semibold text-slate-700 px-5 py-3 rounded-xl outline-none shadow-sm appearance-none transition-all focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-800/30 border border-white/10 text-xs font-black uppercase tracking-widest text-white px-6 py-4 rounded-2xl outline-none shadow-2xl appearance-none transition-all focus:ring-2 focus:ring-indigo-500/50"
               >
                 <option value="PT Trias Insan Madani Cirebon">PT Trias Insan Madani Cirebon</option>
                 <option value="PT HARCOSELARAS SENTOSAJAYA">PT HARCOSELARAS SENTOSAJAYA</option>
               </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 transition-colors">
-                <ChevronDown size={18} />
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 transition-colors">
+                <ChevronDown size={20} />
               </div>
             </div>
           </div>
 
-          <Routes>
-            <Route path="/" element={<Dashboard cpmi={filteredCpmi} sponsors={sponsors} transactions={filteredTransactions} />} />
-            <Route path="/cpmi" element={<CPMIPage cpmi={filteredCpmi} sponsors={sponsors} transactions={filteredTransactions} currentCompany={currentCompany} />} />
-            <Route path="/sponsors" element={<SponsorsPage sponsors={sponsors} />} />
-            <Route path="/transactions" element={<TransactionsPage transactions={filteredTransactions} cpmi={filteredCpmi} />} />
-            <Route path="/reports" element={<ReportsPage transactions={filteredTransactions} />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AnimatePresence mode="wait">
+            {/* @ts-ignore */}
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<PageTransition><Dashboard cpmi={filteredCpmi} sponsors={sponsors} transactions={filteredTransactions} /></PageTransition>} />
+              <Route path="/cpmi" element={<PageTransition><CPMIPage cpmi={filteredCpmi} sponsors={sponsors} transactions={filteredTransactions} currentCompany={currentCompany} /></PageTransition>} />
+              <Route path="/sponsors" element={<PageTransition><SponsorsPage sponsors={sponsors} /></PageTransition>} />
+              <Route path="/transactions" element={<PageTransition><TransactionsPage transactions={filteredTransactions} cpmi={filteredCpmi} /></PageTransition>} />
+              <Route path="/reports" element={<PageTransition><ReportsPage transactions={filteredTransactions} /></PageTransition>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AnimatePresence>
         </div>
       </main>
     </div>
-      </Router>
     </ErrorBoundary>
   );
 }

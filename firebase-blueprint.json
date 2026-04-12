@@ -46,7 +46,7 @@
       "properties": {
         "name": { "type": "string", "description": "Nama Sponsor" },
         "contactPerson": { "type": "string", "description": "Kontak Person" },
-        "phone": { "type": "string", "description": "Nomor Telepon" },
+        "whatsapp": { "type": "string", "description": "Nomor WhatsApp" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name"]
